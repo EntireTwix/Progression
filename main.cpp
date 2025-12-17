@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <vector>
 #include <map>
 
@@ -75,58 +76,87 @@ int main()
 {
     Performance last, target;
     double max_weight;
-    std::map<double, double> weight_and_rep;
-    std::map<double, double> rep_and_weight;
+    std::map<double, double> weight_and_rep, rep_and_weight;
+    bool weights_loaded = false;
+
+    {
+        std::ifstream temp("weights.txt");
+        double line_d;
+        std::string line;
+        if (temp.is_open())
+        {
+            do
+            {
+                std::cout << "Would you like to load your stored weight values? (y/n)\n";
+                std::cin >> line;
+                
+                if (line == "y")
+                {
+                    while (std::getline(temp, line, ','))
+                    {
+                        line_d = std::stod(line);
+                        weight_and_rep.emplace(line_d, estimate_rm(line_d, max_weight));
+                        rep_and_weight.emplace(estimate_rm(line_d, max_weight), line_d);
+                    }
+                    temp.close();
+                    weights_loaded = true;
+                    break;
+                }
+                else if(line == "n") { break; }
+                else { std::cout << "ERROR: invalid response, must be \"y\" or \"n\"\n"; }
+            } while (1);
+        }
+    }
     
     {
         std::string resp;
         double lower_weight_bound, upper_weight_bound, increment_distance;
     
-        std::cout << "How much weight did you lift last performance?\n";
+        std::cout << "\nHow much weight did you lift last performance?\n";
         std::cin >> last.weight;
         std::cout << "\nHow many repetitions of this weight did you perform?\n";
         std::cin >> last.reps;
         std::cout << "\nHow many reps in reserve do you estimate you had? (input 0 if unsure)\n";
         std::cin >> last.rir;
         max_weight = estimate_rm(last);
-
-        do
-        {
-            std::cout << "\nDo you have a continous range of weights available for this excercise? (y/n)\n";
-            std::cin >> resp;
         
-            if (resp == "y")
+        if (!weights_loaded)
+        {
+            do
             {
-                std::cout << "\nWhat is the smallest weight you have?\n";
-                std::cin >> lower_weight_bound;
-                std::cout << "\nWhat is the largest weight you have?\n";
-                std::cin >> upper_weight_bound;
-                std::cout <<"\nHow large is the increment between each weight in this range?\n";
-                std::cin >> increment_distance;
-                
-                for (double i = lower_weight_bound; i <= upper_weight_bound; i+=increment_distance)
-                {
-                    weight_and_rep.emplace(i, estimate_rm(i, max_weight));
-                    rep_and_weight.emplace(estimate_rm(i, max_weight), i);
-                }
-                break;
-            }
-            else if (resp == "n")
-            {
-                std::cout << "\nPlease enter each weight you have seperated by a comma\n";
+                std::cout << "\nDo you have a continous range of weights available for this excercise? (y/n)\n";
                 std::cin >> resp;
-                split(resp, ',', [&weight_and_rep, &rep_and_weight, max_weight](const std::string& str){ 
-                    double temp = std::stod(str);
-                    weight_and_rep.emplace(temp, estimate_rm(temp, max_weight)); 
-                    rep_and_weight.emplace(estimate_rm(temp, max_weight), temp);
-                });
-                break;
-            }
-            else
-            {
-                std::cout << "ERROR: invalid response, must be \"y\" or \"n\"\n";
-            }
-        } while(1);
+            
+                if (resp == "y")
+                {
+                    std::cout << "\nWhat is the smallest weight you have?\n";
+                    std::cin >> lower_weight_bound;
+                    std::cout << "\nWhat is the largest weight you have?\n";
+                    std::cin >> upper_weight_bound;
+                    std::cout <<"\nHow large is the increment between each weight in this range?\n";
+                    std::cin >> increment_distance;
+                    
+                    for (double i = lower_weight_bound; i <= upper_weight_bound; i+=increment_distance)
+                    {
+                        weight_and_rep.emplace(i, estimate_rm(i, max_weight));
+                        rep_and_weight.emplace(estimate_rm(i, max_weight), i);
+                    }
+                    break;
+                }
+                else if (resp == "n")
+                {
+                    std::cout << "\nPlease enter each weight you have seperated by a comma\n";
+                    std::cin >> resp;
+                    split(resp, ',', [&weight_and_rep, &rep_and_weight, max_weight](const std::string& str){ 
+                        double temp = std::stod(str);
+                        weight_and_rep.emplace(temp, estimate_rm(temp, max_weight)); 
+                        rep_and_weight.emplace(estimate_rm(temp, max_weight), temp);
+                    });
+                    break;
+                }
+                else { std::cout << "ERROR: invalid response, must be \"y\" or \"n\"\n"; }
+            } while(1);
+        }
     }
 
     {
@@ -152,10 +182,13 @@ int main()
         }
     }
 
-    // for (auto x : weight_and_rep)
-    // {
-    //     std::cout << x.first << "lb " << x.second << "x " << x.second / max_weight << '\n';   
-    // }
+    std::ofstream temp("weights.txt");
+    if (!temp.is_open()) { std::cout << "ERROR: Couldn't save weights to file\n"; }
+    for (auto x : weight_and_rep)
+    {
+        temp << x.first << ',';
+        // std::cout << x.first << "lb " << x.second << "x " << x.second / max_weight << '\n';   
+    }
 
     std::cout << "\nEstimated 1 rep max of: " << max_weight << '\n';
 
