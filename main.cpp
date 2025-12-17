@@ -1,11 +1,3 @@
-/******************************************************************************
-
-                              Online C++ Compiler.
-               Code, Compile, Run and Debug C++ program online.
-Write your code in this editor and press "Run" button to compile and execute it.
-
-*******************************************************************************/
-
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -158,6 +150,11 @@ int main()
         target.reps = last.reps + last.rir + 1 - target.rir;
     }
 
+    for (auto x : weight_and_rep)
+    {
+        std::cout << x.first << "lb " << x.second << "x " << x.second / max_weight << '\n';   
+    }
+
     {
         int j = 1;
         for (double i = 0.5; (i < 0.9) && ((target.weight/max_weight) >= i); i += (1/6.0))
@@ -170,11 +167,6 @@ int main()
     }
 
     std::cout << "\n\nWorking set: " << target.weight << "lb for " << target.reps << '\n';
-
-    for (auto x : weight_and_rep)
-    {
-        std::cout << x.first << "lb " << x.second << "x " << x.second / max_weight << '\n';   
-    }
 
     return 0;
 }
