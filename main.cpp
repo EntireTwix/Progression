@@ -138,7 +138,7 @@ int main()
     }
 
     unsigned rep_range_low, rep_range_upp;
-    std::cout << "\nHow many rir are you aiming for?\n";
+    std::cout << "\nHow many reps in reserve are you aiming for?\n";
     std::cin >> target.rir;
     std::cout << "\nWhat is the lower bound of your rep range? (input 8 if unsure)\n";
     std::cin >> rep_range_low;
@@ -147,7 +147,8 @@ int main()
     
     if (last.reps + last.rir >= rep_range_upp)
     {
-        auto target_max = rep_and_weight.lower_bound(rep_range_low - 0.01);
+        auto target_max = rep_and_weight.lower_bound(rep_range_low);
+        --target_max;
         target.weight = target_max->second;
         target.reps = target_max->first + 1 - target.rir;
     }
@@ -161,8 +162,8 @@ int main()
         int j = 1;
         for (double i = 0.5; (i < 0.9) && ((target.weight/max_weight) >= i); i += (1/6.0))
         {
-            auto warmup = weight_and_rep.lower_bound((i * max_weight) - 0.01);
-            if (warmup == weight_and_rep.end()) --warmup;
+            auto warmup = weight_and_rep.lower_bound((i * max_weight));
+            --warmup;
             std::cout << "\nWarmup " << j << ": " << warmup->first << "lb for " << unsigned(warmup->second * 0.4);
             ++j;
         }
