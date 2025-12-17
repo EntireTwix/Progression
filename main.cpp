@@ -129,31 +129,35 @@ int main()
         } while(1);
     }
 
-    unsigned rep_range_low, rep_range_upp;
-    std::cout << "\nHow many reps in reserve are you aiming for?\n";
-    std::cin >> target.rir;
-    std::cout << "\nWhat is the lower bound of your rep range? (input 8 if unsure)\n";
-    std::cin >> rep_range_low;
-    std::cout << "\nWhat is the upper bound of your rep range? (input 12 if unsure)\n";
-    std::cin >> rep_range_upp;
-    
-    if (last.reps + last.rir >= rep_range_upp)
     {
-        auto target_max = rep_and_weight.lower_bound(rep_range_low);
-        --target_max;
-        target.weight = target_max->second;
-        target.reps = target_max->first + 1 - target.rir;
-    }
-    else
-    {
-        target.weight = last.weight;
-        target.reps = last.reps + last.rir + 1 - target.rir;
+        unsigned rep_range_low, rep_range_upp;
+        std::cout << "\nHow many reps in reserve are you aiming for?\n";
+        std::cin >> target.rir;
+        std::cout << "\nWhat is the lower bound of your rep range? (input 8 if unsure)\n";
+        std::cin >> rep_range_low;
+        std::cout << "\nWhat is the upper bound of your rep range? (input 12 if unsure)\n";
+        std::cin >> rep_range_upp;
+        
+        if (last.reps + last.rir >= rep_range_upp)
+        {
+            auto target_max = rep_and_weight.lower_bound(rep_range_low);
+            --target_max;
+            target.weight = target_max->second;
+            target.reps = target_max->first + 1 - target.rir;
+        }
+        else
+        {
+            target.weight = last.weight;
+            target.reps = last.reps + last.rir + 1 - target.rir;
+        }
     }
 
-    for (auto x : weight_and_rep)
-    {
-        std::cout << x.first << "lb " << x.second << "x " << x.second / max_weight << '\n';   
-    }
+    // for (auto x : weight_and_rep)
+    // {
+    //     std::cout << x.first << "lb " << x.second << "x " << x.second / max_weight << '\n';   
+    // }
+
+    std::cout << "\nEstimated 1 rep max of: " << max_weight << '\n';
 
     {
         int j = 1;
