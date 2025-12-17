@@ -78,47 +78,47 @@ int main()
     double max_weight;
     std::map<double, double> weight_and_rep, rep_and_weight;
     bool weights_loaded = false;
-
-    {
-        std::ifstream temp("weights.txt");
-        double line_d;
-        std::string line;
-        if (temp.is_open())
-        {
-            do
-            {
-                std::cout << "Would you like to load your stored weight values? (y/n)\n";
-                std::cin >> line;
-                
-                if (line == "y")
-                {
-                    while (std::getline(temp, line, ','))
-                    {
-                        line_d = std::stod(line);
-                        weight_and_rep.emplace(line_d, estimate_rm(line_d, max_weight));
-                        rep_and_weight.emplace(estimate_rm(line_d, max_weight), line_d);
-                    }
-                    temp.close();
-                    weights_loaded = true;
-                    break;
-                }
-                else if(line == "n") { break; }
-                else { std::cout << "ERROR: invalid response, must be \"y\" or \"n\"\n"; }
-            } while (1);
-        }
-    }
     
     {
         std::string resp;
         double lower_weight_bound, upper_weight_bound, increment_distance;
     
-        std::cout << "\nHow much weight did you lift last performance?\n";
+        std::cout << "How much weight did you lift last performance?\n";
         std::cin >> last.weight;
         std::cout << "\nHow many repetitions of this weight did you perform?\n";
         std::cin >> last.reps;
         std::cout << "\nHow many reps in reserve do you estimate you had? (input 0 if unsure)\n";
         std::cin >> last.rir;
         max_weight = estimate_rm(last);
+
+        {
+            std::ifstream temp("weights.txt");
+            double line_d;
+            std::string line;
+            if (temp.is_open())
+            {
+                do
+                {
+                    std::cout << "\nWould you like to load your stored weight values? (y/n)\n";
+                    std::cin >> line;
+                    
+                    if (line == "y")
+                    {
+                        while (std::getline(temp, line, ','))
+                        {
+                            line_d = std::stod(line);
+                            weight_and_rep.emplace(line_d, estimate_rm(line_d, max_weight));
+                            rep_and_weight.emplace(estimate_rm(line_d, max_weight), line_d);
+                        }
+                        temp.close();
+                        weights_loaded = true;
+                        break;
+                    }
+                    else if(line == "n") { break; }
+                    else { std::cout << "ERROR: invalid response, must be \"y\" or \"n\"\n"; }
+                } while (1);
+            }
+        }
         
         if (!weights_loaded)
         {
