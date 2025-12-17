@@ -97,11 +97,11 @@ int main()
         
             if (resp == "y")
             {
-                std::cout << "\nWhat is the lower bound of this range?\n";
+                std::cout << "\nWhat is the smallest weight you have?\n";
                 std::cin >> lower_weight_bound;
-                std::cout << "\nWhat is the upper bound of this range?\n";
+                std::cout << "\nWhat is the largest weight you have?\n";
                 std::cin >> upper_weight_bound;
-                std::cout <<"\nHow large is each increment?\n";
+                std::cout <<"\nHow large is the increment between each weight in this range?\n";
                 std::cin >> increment_distance;
                 
                 for (double i = lower_weight_bound; i <= upper_weight_bound; i+=increment_distance)
