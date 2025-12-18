@@ -204,7 +204,8 @@ int main()
 
     {
         int j = 1;
-        double set_percentages[]{0.5, 0.6, 0.7625, 0.8 + (1/30.0), 0.958};
+        // 12 8 4 2 1
+        double set_percentages[]{0.5, 0.6, 0.75, 0.89, 0.958};
         for (double i : set_percentages)
         {
             if ((target.weight / max_weight) < i) { break; }
@@ -214,7 +215,7 @@ int main()
             
             // 0.958 is the point at which only 2.5x reps is possible therefore 35% of which would be 1
             if ((warmup->first / max_weight) > 0.958) { break; }
-            std::cout << "\nWarmup " << j << ": " << warmup->first << "lb for " << unsigned(warmup->second * 0.4);
+            std::cout << "\nWarmup " << j << ": " << warmup->first << "lb for " << unsigned(warmup->second * 0.35);
             ++j;
         }
     }
