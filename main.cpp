@@ -213,9 +213,9 @@ int main()
             // std::cout << '\n' << i << ' ' << std::prev(warmup)->first << ' ' << warmup->first << ' ' << max_weight << '\n';
             if (std::abs(std::prev(warmup)->first - (i * max_weight)) < std::abs(warmup->first - (i * max_weight))) { --warmup; }
             
-            // 0.958 is the point at which only 2.5x reps is possible therefore 35% of which would be 1
+            // 0.958 is the point at which only 2.5x reps is possible therefore 40% of which would be 1
             if ((warmup->first / max_weight) > 0.958) { break; }
-            std::cout << "\nWarmup " << j << ": " << warmup->first << "lb for " << unsigned(warmup->second * 0.35);
+            std::cout << "\nWarmup " << j << ": " << warmup->first << "lb for " << unsigned(warmup->second * 0.4);
             ++j;
         }
     }
