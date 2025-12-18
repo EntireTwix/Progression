@@ -140,8 +140,10 @@ int main()
                     
                 for (double i = lower_weight_bound; i <= upper_weight_bound; i+=increment_distance)
                 {
-                    weight_and_rep.emplace(i, estimate_rm(i, max_weight));
-                    rep_and_weight.emplace(estimate_rm(i, max_weight), i);
+                    double temp;
+                    if ((temp = estimate_rm(i, max_weight)) < 0) { break; }
+                    weight_and_rep.emplace(i, temp);
+                    rep_and_weight.emplace(temp, i);
                 }
             }
             else
@@ -149,9 +151,9 @@ int main()
                 std::cout << "\nPlease enter each weight you have seperated by a comma\n";
                 std::cin >> resp;
                 split(resp, ',', [&weight_and_rep, &rep_and_weight, max_weight](const std::string& str){ 
-                    double temp = std::stod(str);
-                    weight_and_rep.emplace(temp, estimate_rm(temp, max_weight)); 
-                    rep_and_weight.emplace(estimate_rm(temp, max_weight), temp);
+                    double temp_weight = std::stod(str), temp_est = estimate_rm(temp_weight, max_weight);
+                    weight_and_rep.emplace(temp_weight, temp_est); 
+                    rep_and_weight.emplace(temp_est, temp_weight);
                 });
             }
         }
@@ -170,8 +172,7 @@ int main()
         {
             auto target_max = rep_and_weight.lower_bound(rep_range_low);
             // std::cout << std::abs(std::prev(target_max)->first - rep_range_low) << ' ' << std::abs(target_max->first - rep_range_low) << '\n';
-            if ((std::abs(std::prev(target_max)->first - rep_range_low) < std::abs(target_max->first - rep_range_low)) 
-            && (target_max != rep_and_weight.begin())) { --target_max; }
+            if (target_max != weight_and_rep.begin() && (std::abs(std::prev(target_max)->first - rep_range_low) < std::abs(target_max->first - rep_range_low))){ --target_max; }
             target.weight = target_max->second;
             target.reps = target_max->first + 1 - target.rir;
         }
@@ -211,7 +212,7 @@ int main()
             if ((target.weight / max_weight) < i) { break; }
             auto warmup = weight_and_rep.lower_bound(i * max_weight);
             // std::cout << '\n' << i << ' ' << std::prev(warmup)->first << ' ' << warmup->first << ' ' << max_weight << '\n';
-            if (std::abs(std::prev(warmup)->first - (i * max_weight)) < std::abs(warmup->first - (i * max_weight))) { --warmup; }
+            if (warmup != weight_and_rep.begin() && std::abs(std::prev(warmup)->first - (i * max_weight)) < std::abs(warmup->first - (i * max_weight))) { --warmup; }
             
             // 0.958 is the point at which only 2.5x reps is possible therefore 40% of which would be 1
             if ((warmup->first / max_weight) > 0.958) { break; }
