@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <cmath>
+#include <iomanip>
 
 template <typename T>
 inline std::vector<std::string> split(const std::string &inp, char delim, T &&func)
@@ -92,6 +93,7 @@ int main()
     double max_weight;
     std::map<double, double> weight_and_rep, rep_and_weight;
     bool weights_loaded = false;
+    std::cout << std::setprecision(1) << std::fixed;
     
     {
         std::string resp;
@@ -99,7 +101,7 @@ int main()
     
         std::cout << "How much weight did you lift last performance?\n";
         std::cin >> last.weight;
-        std::cout << "\nHow many repetitions of this weight did you perform?\n";
+        std::cout << "\nHow many reps of this weight did you perform?\n";
         std::cin >> last.reps;
         std::cout << "\nHow many reps in reserve do you estimate you had? (input 0 if unsure)\n";
         std::cin >> last.rir;
@@ -157,16 +159,17 @@ int main()
 
     {
         unsigned rep_range_low, rep_range_upp;
-        std::cout << "\nHow many reps in reserve are you aiming for?\n";
+        std::cout << "\nHow many reps in reserve are you aiming for? (input 0 if unsure)\n";
         std::cin >> target.rir;
         std::cout << "\nWhat is the lower bound of your rep range? (input 8 if unsure)\n";
         std::cin >> rep_range_low;
         std::cout << "\nWhat is the upper bound of your rep range? (input 12 if unsure)\n";
         std::cin >> rep_range_upp;
         
-        if ((last.reps + last.rir >= rep_range_upp) || (last.reps + last.rir < rep_range_low))
+        if ((last.reps + last.rir >= rep_range_upp) || (last.reps + last.rir < rep_range_low) || (weight_and_rep.find(last.weight) == weight_and_rep.end()))
         {
             auto target_max = rep_and_weight.lower_bound(rep_range_low);
+            // std::cout << std::abs(std::prev(target_max)->first - rep_range_low) << ' ' << std::abs(target_max->first - rep_range_low) << '\n';
             if ((std::abs(std::prev(target_max)->first - rep_range_low) < std::abs(target_max->first - rep_range_low)) 
             && (target_max != rep_and_weight.begin())) { --target_max; }
             target.weight = target_max->second;
@@ -177,26 +180,40 @@ int main()
             target.weight = last.weight;
             target.reps = last.reps + last.rir + 1 - target.rir;
         }
+
+        std::cout << "\n[Selecting " << target.weight << "lb as Working Weight]\n";
     }
 
+    for (auto x : weight_and_rep)
+    {
+        std::cout << x.first << "lb " << x.second << "x " << (x.first / max_weight)*100 << "%\n";   
+    }
+
+    if (!weights_loaded && retrieve_response("\nWould you like to save the information of what weights you have available? (y/n)\n"))
     {
         std::ofstream temp("weights.txt");
         if (!temp.is_open()) { std::cout << "ERROR: Couldn't save weights to file\n"; }
         for (auto x : weight_and_rep)
         {
+            std::cout << x.first << "lb " << x.second << "x " << (x.first / max_weight)*100 << "%\n";   
             temp << x.first << ',';
-            std::cout << x.first << "lb " << x.second << "x " << x.first / max_weight << '\n';   
         }
     }
 
-    std::cout << "\nEstimated 1 rep max of: " << max_weight << '\n';
+    std::cout << "\nEstimated 1RM based on last performance: " << max_weight << "lb\n";
 
     {
         int j = 1;
-        for (double i = 0.5; (i < 0.9) && ((target.weight/max_weight) >= i); i += (1/6.0))
+        double set_percentages[]{0.5, 0.6, 0.7625, 0.8 + (1/30.0), 0.958};
+        for (double i : set_percentages)
         {
-            auto warmup = weight_and_rep.lower_bound(i * max_weight);            
-            if (std::abs(std::prev(warmup)->second - (i * max_weight)) < std::abs(warmup->second - (i * max_weight))) { --warmup; }
+            if ((target.weight / max_weight) < i) { break; }
+            auto warmup = weight_and_rep.lower_bound(i * max_weight);
+            // std::cout << '\n' << i << ' ' << std::prev(warmup)->first << ' ' << warmup->first << ' ' << max_weight << '\n';
+            if (std::abs(std::prev(warmup)->first - (i * max_weight)) < std::abs(warmup->first - (i * max_weight))) { --warmup; }
+            
+            // 0.958 is the point at which only 2.5x reps is possible therefore 35% of which would be 1
+            if ((warmup->first / max_weight) > 0.958) { break; }
             std::cout << "\nWarmup " << j << ": " << warmup->first << "lb for " << unsigned(warmup->second * 0.4);
             ++j;
         }
