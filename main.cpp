@@ -3,6 +3,7 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <unordered_set>
 #include <map>
 #include <cmath>
 #include <iomanip>
@@ -151,9 +152,12 @@ int main()
                 std::cout << "\nPlease enter each weight you have seperated by a comma\n";
                 std::cin >> resp;
                 split(resp, ',', [&weight_and_rep, &rep_and_weight, max_weight](const std::string& str){ 
-                    double temp_weight = std::stod(str), temp_est = estimate_rm(temp_weight, max_weight);
-                    weight_and_rep.emplace(temp_weight, temp_est); 
-                    rep_and_weight.emplace(temp_est, temp_weight);
+                    double temp_weight = std::stod(str), temp_est;
+                    if ((temp_est = estimate_rm(temp_weight, max_weight)) >= 0)
+                    {
+                        weight_and_rep.emplace(temp_weight, temp_est); 
+                        rep_and_weight.emplace(temp_est, temp_weight);
+                    }
                 });
             }
         }
@@ -207,6 +211,7 @@ int main()
         int j = 1;
         // 12 8 4 2 1
         double set_percentages[]{0.5, 0.6, 0.75, 0.89, 0.958};
+        std::unordered_set<double> warmups;
         for (double i : set_percentages)
         {
             if ((target.weight / max_weight) < i) { break; }
@@ -215,7 +220,7 @@ int main()
             if (warmup != weight_and_rep.begin() && std::abs(std::prev(warmup)->first - (i * max_weight)) < std::abs(warmup->first - (i * max_weight))) { --warmup; }
             
             // 0.958 is the point at which only 2.5x reps is possible therefore 40% of which would be 1
-            if ((warmup->first / max_weight) > 0.958) { break; }
+            if (((warmup->first / max_weight) > 0.958) || !warmups.emplace(warmup->first).second) { continue; }
             std::cout << "\nWarmup " << j << ": " << warmup->first << "lb for " << unsigned(warmup->second * 0.4);
             ++j;
         }
