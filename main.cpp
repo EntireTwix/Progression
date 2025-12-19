@@ -116,9 +116,12 @@ int main()
             {
                 if (retrieve_response("\nWould you like to load your stored weight values? (y/n)\n"))                   
                 {
+                    double temp_est;
                     while (std::getline(temp, line, ','))
                     {
                         line_d = std::stod(line);
+                        temp_est = estimate_rm(line_d, max_weight);
+                        if (temp_est < 0) { break; }
                         weight_and_rep.emplace(line_d, estimate_rm(line_d, max_weight));
                         rep_and_weight.emplace(estimate_rm(line_d, max_weight), line_d);
                     }
@@ -139,9 +142,9 @@ int main()
                 std::cout <<"\nHow large is the increment between each weight in this range?\n";
                 std::cin >> increment_distance;
                     
+                double temp;
                 for (double i = lower_weight_bound; i <= upper_weight_bound; i+=increment_distance)
                 {
-                    double temp;
                     if ((temp = estimate_rm(i, max_weight)) < 0) { break; }
                     weight_and_rep.emplace(i, temp);
                     rep_and_weight.emplace(temp, i);
