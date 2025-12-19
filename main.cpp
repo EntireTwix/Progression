@@ -178,8 +178,15 @@ int main()
         if ((last.reps + last.rir >= rep_range_upp) || (last.reps + last.rir < rep_range_low) || (weight_and_rep.find(last.weight) == weight_and_rep.end()))
         {
             auto target_max = rep_and_weight.lower_bound(rep_range_low);
-            // std::cout << std::abs(std::prev(target_max)->first - rep_range_low) << ' ' << std::abs(target_max->first - rep_range_low) << '\n';
-            if (target_max != weight_and_rep.begin() && (std::abs(std::prev(target_max)->first - rep_range_low) < std::abs(target_max->first - rep_range_low))){ --target_max; }
+            // std::cout << '\n' << target_max->first << ' ' << ' ' << target_max->second;
+            
+            if ((target_max != rep_and_weight.begin()) && 
+            (std::abs(std::prev(target_max)->first - rep_range_low) < std::abs(target_max->first - rep_range_low)))
+            { 
+                --target_max;
+                // std::cout << "->" << target_max->first << ' ' << target_max->second;
+            }
+            
             target.weight = target_max->second;
             target.reps = target_max->first + 1 - target.rir;
         }
