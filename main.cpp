@@ -94,11 +94,12 @@ int main()
     double max_weight;
     std::map<double, double> weight_and_rep, rep_and_weight;
     bool weights_loaded = false;
-    std::cout << std::setprecision(1) << std::fixed;
+    std::cout << std::fixed;
+    int precision_size = 0;
     
     {
         std::string resp;
-        double lower_weight_bound, upper_weight_bound, increment_distance;
+        double lower_weight_bound, upper_weight_bound;
     
         std::cout << "How much weight did you lift last performance?\n";
         std::cin >> last.weight;
@@ -116,6 +117,11 @@ int main()
             {
                 if (retrieve_response("\nWould you like to load your stored weight values? (y/n)\n"))                   
                 {
+                    
+                    std::getline(temp, line, ',');
+                    int line_i = std::stoi(line);
+                    precision_size = line_i;
+                    
                     double temp_est;
                     while (std::getline(temp, line, ','))
                     {
@@ -135,15 +141,20 @@ int main()
         {
             if (retrieve_response("\nDo you have a continous range of weights available for this excercise? (y/n)\n"))
             {
+                std::string increment_distance;
+
                 std::cout << "\nWhat is the smallest weight you have?\n";
                 std::cin >> lower_weight_bound;
                 std::cout << "\nWhat is the largest weight you have?\n";
                 std::cin >> upper_weight_bound;
                 std::cout <<"\nHow large is the increment between each weight in this range?\n";
                 std::cin >> increment_distance;
-                    
-                double temp;
-                for (double i = lower_weight_bound; i <= upper_weight_bound; i+=increment_distance)
+                
+                auto distance = increment_distance.find('.');
+                precision_size += (distance != std::string::npos) * (increment_distance.length() - distance - 1);
+                double temp, inc = std::stod(increment_distance);
+                
+                for (double i = lower_weight_bound; i <= upper_weight_bound; i+=inc)
                 {
                     if ((temp = estimate_rm(i, max_weight)) < 0) { break; }
                     weight_and_rep.emplace(i, temp);
@@ -177,6 +188,8 @@ int main()
         
         if ((last.reps + last.rir >= rep_range_upp) || (last.reps + last.rir + 1 < rep_range_low) || (weight_and_rep.find(last.weight) == weight_and_rep.end()))
         {
+            std::cout << "Last performance's weight is not suitable, finding another\n";
+
             auto target_max = rep_and_weight.lower_bound(rep_range_low);
             // std::cout << '\n' << target_max->first << ' ' << ' ' << target_max->second;
             
@@ -189,32 +202,43 @@ int main()
             
             target.weight = target_max->second;
             target.reps = target_max->first + 1 - target.rir;
+
         }
         else
         {
+            std::cout << "\n[Last performance's weight is available and within rep range]\n";
+            
             target.weight = last.weight;
             target.reps = last.reps + last.rir + 1 - target.rir;
         }
 
-        std::cout << "\n[Selecting " << target.weight << "lb as Working Weight]\n";
+        std::cout << std::setprecision(precision_size) << std::fixed
+                  << "[Selecting " << target.weight << "lb as Working Weight]\n\n";
     }
+    
+    int largest_weight_length = std::to_string(unsigned(std::round(max_weight))).length() + precision_size + 1;
+    int largest_rep_length = std::to_string(unsigned(weight_and_rep.begin()->second)).length();
 
     for (auto x : weight_and_rep)
     {
-        std::cout << x.first << "lb " << x.second << "x " << (x.first / max_weight)*100 << "%\n";   
+        std::cout << "| "
+                  << std::setw(largest_weight_length) << std::setprecision(precision_size) << x.first << "lb | "
+                  << std::setw(largest_rep_length + 2) << std::setprecision(1) << x.second << "x | "
+                  << std::setw(6) << std::setprecision(2) << (x.first / max_weight)*100 << "% |\n";   
     }
 
     if (!weights_loaded && retrieve_response("\nWould you like to save the information of what weights you have available? (y/n)\n"))
     {
         std::ofstream temp("weights.txt");
         if (!temp.is_open()) { std::cout << "ERROR: Couldn't save weights to file\n"; }
+        temp << precision_size << ',';
         for (auto x : weight_and_rep)
         {
             temp << x.first << ',';
         }
     }
 
-    std::cout << "\nEstimated 1RM based on last performance: " << max_weight << "lb\n";
+    std::cout << "\nEstimated 1RM based on last performance: " << max_weight << "lb\n" << std::setprecision(precision_size);
 
     {
         int j = 1;
@@ -230,12 +254,12 @@ int main()
             
             // 0.958 is the point at which only 2.5x reps is possible therefore 40% of which would be 1
             if (((warmup->first / max_weight) > 0.958) || !warmups.emplace(warmup->first).second) { continue; }
-            std::cout << "\nWarmup " << j << ": " << warmup->first << "lb for " << unsigned(warmup->second * 0.4);
+            std::cout << "\nWarmup " << j << "    : " << std::setw(largest_weight_length) << warmup->first << "lb for " << unsigned(warmup->second * 0.4);
             ++j;
         }
     }
 
-    std::cout << "\n\nWorking set: " << target.weight << "lb for " << target.reps << '\n';
+    std::cout << "\n\nWorking set : " << std::setw(largest_weight_length) << target.weight << "lb for " << target.reps << '\n';
 
     return 0;
 }
