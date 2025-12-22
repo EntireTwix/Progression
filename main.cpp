@@ -175,7 +175,7 @@ int main()
         std::cout << "\nWhat is the upper bound of your rep range? (input 12 if unsure)\n";
         std::cin >> rep_range_upp;
         
-        if ((last.reps + last.rir >= rep_range_upp) || (last.reps + last.rir < rep_range_low) || (weight_and_rep.find(last.weight) == weight_and_rep.end()))
+        if ((last.reps + last.rir >= rep_range_upp) || (last.reps + last.rir + 1 < rep_range_low) || (weight_and_rep.find(last.weight) == weight_and_rep.end()))
         {
             auto target_max = rep_and_weight.lower_bound(rep_range_low);
             // std::cout << '\n' << target_max->first << ' ' << ' ' << target_max->second;
@@ -210,7 +210,6 @@ int main()
         if (!temp.is_open()) { std::cout << "ERROR: Couldn't save weights to file\n"; }
         for (auto x : weight_and_rep)
         {
-            std::cout << x.first << "lb " << x.second << "x " << (x.first / max_weight)*100 << "%\n";   
             temp << x.first << ',';
         }
     }
