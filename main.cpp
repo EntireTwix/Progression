@@ -221,10 +221,9 @@ int main()
 
     for (auto x : weight_and_rep)
     {
-        std::cout << "| "
-                  << std::setw(largest_weight_length) << std::setprecision(precision_size) << x.first << "lb | "
-                  << std::setw(largest_rep_length + 2) << std::setprecision(1) << x.second << "x | "
-                  << std::setw(6) << std::setprecision(2) << (x.first / max_weight)*100 << "% |\n";   
+        std::cout << std::setw(largest_weight_length) << std::setprecision(precision_size) << std::right << x.first << "lb x "
+                  << std::setw(largest_rep_length + 2) << std::setprecision(1) << std::left << x.second
+                  << std::setw(8) << std::setprecision(2) << std::right << (x.first / max_weight)*100 << "%\n";   
     }
 
     if (!weights_loaded && retrieve_response("\nWould you like to save the information of what weights you have available? (y/n)\n"))
