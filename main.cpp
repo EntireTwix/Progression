@@ -7,6 +7,7 @@
 #include <map>
 #include <cmath>
 #include <iomanip>
+#include <type_traits>
 
 template <typename T>
 inline std::vector<std::string> split(const std::string &inp, char delim, T &&func)
@@ -86,6 +87,28 @@ double estimate_rm(double weight, double max_weight)
         
         return (epley_mult * rev_epley_est(weight, max_weight)) + ((1 - epley_mult) * rev_brzycki_est(weight, max_weight));
     }
+}
+
+//copy_fast type metafunction
+template <typename T>
+struct copy_fast : std::conditional<std::is_trivially_copyable<T>::value, T, const T &>{};
+template <typename T>
+using copy_fast_t = typename copy_fast<T>::type;
+
+template <typename T, typename T2>
+auto find_closet(const std::map<T, T2>& x, copy_fast_t<T> val)
+{
+    auto res = x.lower_bound(val);
+    // std::cout << '\n' << res->first << ' ' << ' ' << res->second;
+            
+    if ((res != x.begin()) && 
+    (std::abs(std::prev(res)->first - val) < std::abs(res->first - val)))
+    { 
+        --res;
+        // std::cout << "->" << res->first << ' ' << res->second;
+    }
+
+    return res;
 }
 
 int main()
@@ -188,32 +211,20 @@ int main()
         
         if ((last.reps + last.rir >= rep_range_upp) || (last.reps + last.rir + 1 < rep_range_low) || (weight_and_rep.find(last.weight) == weight_and_rep.end()))
         {
-            std::cout << "Last performance's weight is not suitable, finding another\n";
-
-            auto target_max = rep_and_weight.lower_bound(rep_range_low);
-            // std::cout << '\n' << target_max->first << ' ' << ' ' << target_max->second;
-            
-            if ((target_max != rep_and_weight.begin()) && 
-            (std::abs(std::prev(target_max)->first - rep_range_low) < std::abs(target_max->first - rep_range_low)))
-            { 
-                --target_max;
-                // std::cout << "->" << target_max->first << ' ' << target_max->second;
-            }
+            auto target_max = find_closet(rep_and_weight, rep_range_low);
             
             target.weight = target_max->second;
             target.reps = target_max->first + 1 - target.rir;
 
         }
         else
-        {
-            std::cout << "\n[Last performance's weight is available and within rep range]\n";
-            
+        {            
             target.weight = last.weight;
             target.reps = last.reps + last.rir + 1 - target.rir;
         }
 
         std::cout << std::setprecision(precision_size) << std::fixed
-                  << "[Selecting " << target.weight << "lb as Working Weight]\n\n";
+                  << "\n[Selecting " << target.weight << "lb as Working Weight]\n\n";
     }
     
     int largest_weight_length = std::to_string(unsigned(std::round(max_weight))).length() + precision_size + 1;
@@ -239,23 +250,79 @@ int main()
 
     std::cout << "\nEstimated 1RM based on last performance: " << max_weight << "lb\n" << std::setprecision(precision_size);
 
+    size_t j = 1;
+    auto print_warmup = [&j, largest_weight_length](copy_fast_t<std::pair<double, unsigned>> x){ 
+        if (x.second) { std::cout << "\nWarmup " << j++ << "    : " << std::setw(largest_weight_length) << x.first << "lb for " << x.second; }
+    };
+
+    auto reduced_weight = 0.5 * target.weight;
+    auto reduced_rm = estimate_rm(reduced_weight, max_weight);
+    auto closest_weight = find_closet(weight_and_rep, reduced_weight);
+
+    if (target.reps >= 10)
     {
-        int j = 1;
-        // 12 8 4 2 1
-        double set_percentages[]{0.5, 0.6, 0.75, 0.89, 0.958};
-        std::unordered_set<double> warmups;
-        for (double i : set_percentages)
-        {
-            if ((target.weight / max_weight) < i) { break; }
-            auto warmup = weight_and_rep.lower_bound(i * max_weight);
-            // std::cout << '\n' << i << ' ' << std::prev(warmup)->first << ' ' << warmup->first << ' ' << max_weight << '\n';
-            if (warmup != weight_and_rep.begin() && std::abs(std::prev(warmup)->first - (i * max_weight)) < std::abs(warmup->first - (i * max_weight))) { --warmup; }
-            
-            // 0.958 is the point at which only 2.5x reps is possible therefore 40% of which would be 1
-            if (((warmup->first / max_weight) > 0.958) || !warmups.emplace(warmup->first).second) { continue; }
-            std::cout << "\nWarmup " << j << "    : " << std::setw(largest_weight_length) << warmup->first << "lb for " << unsigned(warmup->second * 0.4);
-            ++j;
-        }
+        print_warmup({closest_weight->first, std::round((5 / reduced_rm) * closest_weight->second)});
+    }
+    else if (target.reps >= 6 && target.reps <= 9)
+    {
+        print_warmup({closest_weight->first, std::round((5 / reduced_rm) * closest_weight->second)});
+        
+        reduced_weight = 0.8 * target.weight;
+        reduced_rm = estimate_rm(reduced_weight, max_weight);
+        closest_weight = find_closet(weight_and_rep, reduced_weight);
+        print_warmup({closest_weight->first, std::round((3 / reduced_rm) * closest_weight->second)});
+    }
+    else if (target.reps >= 3 && target.reps <= 5)
+    {
+        reduced_weight = 0.4 * target.weight;
+        reduced_rm = estimate_rm(reduced_weight, max_weight);
+        closest_weight = find_closet(weight_and_rep, reduced_weight);
+        print_warmup({closest_weight->first, std::round((5 / reduced_rm) * closest_weight->second)});
+        
+        reduced_weight = 0.6 * target.weight;
+        reduced_rm = estimate_rm(reduced_weight, max_weight);
+        closest_weight = find_closet(weight_and_rep, reduced_weight);
+        print_warmup({closest_weight->first, std::round((3 / reduced_rm) * closest_weight->second)});
+        
+        
+        reduced_weight = 0.8 * target.weight;
+        reduced_rm = estimate_rm(reduced_weight, max_weight);
+        closest_weight = find_closet(weight_and_rep, reduced_weight);
+        print_warmup({closest_weight->first, std::round((1 / reduced_rm) * closest_weight->second)});
+        
+        // std::cout << "\nIdeal reduced weight: " << reduced_weight
+        //           << "\nRep max of said weight: " << reduced_rm
+        //           << "\nClosest weight: " << closest_weight->first
+        //           << "\nClosest weight's RM: " << closest_weight->second << '\n'
+        //           << (1 / reduced_rm) << " * " <<  closest_weight->second << ' ' << (1 / reduced_rm) * closest_weight->second << '\n';
+        
+    }
+    else // 1 - 2
+    {
+        reduced_weight = 0.3 * target.weight;
+        reduced_rm = estimate_rm(reduced_weight, max_weight);
+        closest_weight = find_closet(weight_and_rep, reduced_weight);
+        print_warmup({closest_weight->first, std::round((5 / reduced_rm) * closest_weight->second)});
+
+        reduced_weight = 0.5 * target.weight;
+        reduced_rm = estimate_rm(reduced_weight, max_weight);
+        closest_weight = find_closet(weight_and_rep, reduced_weight);
+        print_warmup({closest_weight->first, std::round((3 / reduced_rm) * closest_weight->second)});
+
+        reduced_weight = 0.65 * target.weight;
+        reduced_rm = estimate_rm(reduced_weight, max_weight);
+        closest_weight = find_closet(weight_and_rep, reduced_weight);
+        print_warmup({closest_weight->first, std::round((2 / reduced_rm) * closest_weight->second)});
+        
+        reduced_weight = 0.8 * target.weight;
+        reduced_rm = estimate_rm(reduced_weight, max_weight);
+        closest_weight = find_closet(weight_and_rep, reduced_weight);
+        print_warmup({closest_weight->first, std::round((1 / reduced_rm) * closest_weight->second)});
+                
+        reduced_weight = 0.9 * target.weight;
+        reduced_rm = estimate_rm(reduced_weight, max_weight);
+        closest_weight = find_closet(weight_and_rep, reduced_weight);
+        print_warmup({closest_weight->first, std::round((1 / reduced_rm) * closest_weight->second)});
     }
 
     std::cout << "\n\nWorking set : " << std::setw(largest_weight_length) << target.weight << "lb for " << target.reps << '\n';
