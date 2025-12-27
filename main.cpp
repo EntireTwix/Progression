@@ -250,7 +250,7 @@ int main()
 
     std::cout << "\nEstimated 1RM based on last performance: " << max_weight << "lb\n" << std::setprecision(precision_size);
 
-    auto percentage_warmup = [max_weight, &weight_and_rep](double intended_percentage, unsigned intended_reps, std::map<double, unsigned>& sets){
+    auto percentage_warmup = [max_weight, &weight_and_rep](double intended_percentage, unsigned intended_reps, std::map<double, double>& sets){
         auto reduced_weight = intended_percentage * max_weight;
         auto reduced_rm = estimate_rm(reduced_weight, max_weight);
         auto closest_weight = find_closet(weight_and_rep, reduced_weight);
@@ -259,11 +259,11 @@ int main()
 
         if (!temp.second)
         {
-            temp.first->second += unsigned(temp_val);
+            temp.first->second += temp_val;
         }
     };
 
-    std::map<double, unsigned> warmup_sets;
+    std::map<double, double> warmup_sets;
 
     percentage_warmup(0.4, 5, warmup_sets);
     percentage_warmup(0.5, 5, warmup_sets);
@@ -285,7 +285,11 @@ int main()
         std::cout << "\nWarmup " << j++ << "    : " << std::setw(largest_weight_length) << set.first << "lb for " << set.second;
     }
 
-    std::cout << "\n\nWorking set : " << std::setw(largest_weight_length) << target.weight << "lb for " << target.reps << '\n';
+    std::cout << "\n\nWorking set : " << std::setw(largest_weight_length) << target.weight << "lb for " << std::round(target.reps) << '\n';
 
     return 0;
 }
+
+// 172
+// 140
+// 183
