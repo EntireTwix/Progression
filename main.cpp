@@ -282,10 +282,10 @@ int main()
     size_t j = 1;
     for (auto set : warmup_sets)
     {
-        std::cout << "\nWarmup " << j++ << "    : " << std::setw(largest_weight_length) << set.first << "lb for " << set.second;
+        std::cout << "\nWarmup " << j++ << "    : " << std::setw(largest_weight_length) << set.first << "lb for " << unsigned(std::round(set.second));
     }
 
-    std::cout << "\n\nWorking set : " << std::setw(largest_weight_length) << target.weight << "lb for " << std::round(target.reps) << '\n';
+    std::cout << "\n\nWorking set : " << std::setw(largest_weight_length) << target.weight << "lb for " << target.reps << '\n';
 
     return 0;
 }
