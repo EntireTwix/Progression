@@ -215,7 +215,6 @@ int main()
             
             target.weight = target_max->second;
             target.reps = target_max->first + 1 - target.rir;
-
         }
         else
         {            
@@ -250,20 +249,14 @@ int main()
 
     std::cout << "\nEstimated 1RM based on last performance: " << max_weight << "lb\n" << std::setprecision(precision_size);
 
-    auto percentage_warmup = [max_weight, &weight_and_rep](double intended_percentage, unsigned intended_reps, std::map<double, double>& sets){
+    auto percentage_warmup = [max_weight, &weight_and_rep](double intended_percentage, unsigned intended_reps, std::vector<std::pair<double, double>>& sets){
         auto reduced_weight = intended_percentage * max_weight;
         auto reduced_rm = estimate_rm(reduced_weight, max_weight);
         auto closest_weight = find_closet(weight_and_rep, reduced_weight);
-        auto temp_val = std::round((intended_reps / reduced_rm) * closest_weight->second);
-        auto temp = sets.emplace(closest_weight->first, temp_val);
-
-        if (!temp.second)
-        {
-            temp.first->second += temp_val;
-        }
+        sets.push_back({closest_weight->first, std::round((intended_reps / reduced_rm) * closest_weight->second)});
     };
 
-    std::map<double, double> warmup_sets;
+    std::vector<std::pair<double, double>> warmup_sets;
 
     percentage_warmup(0.4, 5, warmup_sets);
     percentage_warmup(0.5, 5, warmup_sets);
@@ -289,7 +282,3 @@ int main()
 
     return 0;
 }
-
-// 172
-// 140
-// 183
