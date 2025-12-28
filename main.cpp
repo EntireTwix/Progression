@@ -253,7 +253,7 @@ int main()
         auto reduced_weight = intended_percentage * max_weight;
         auto reduced_rm = estimate_rm(reduced_weight, max_weight);
         auto closest_weight = find_closet(weight_and_rep, reduced_weight);
-        sets.push_back({closest_weight->first, std::round((intended_reps / reduced_rm) * closest_weight->second)});
+        sets.push_back({closest_weight->first, (intended_reps / reduced_rm) * closest_weight->second});
     };
 
     std::vector<std::pair<double, double>> warmup_sets;
