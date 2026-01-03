@@ -32,7 +32,7 @@ bool retrieve_response(const std::string& question)
         std::cin >> str; 
         if (str == "y") { return true; }
         else if(str == "n") { return false; }
-        else { std::cout << "ERROR: invalid response, must be \"y\" or \"n\"\n"; }
+        else { std::cerr << "ERROR: invalid response, must be \"y\" or \"n\"\n"; }
     }while(1);
 }
 
@@ -211,7 +211,16 @@ int main()
         
         if ((last.reps + last.rir >= rep_range_upp) || (last.reps + last.rir + 1 < rep_range_low) || (weight_and_rep.find(last.weight) == weight_and_rep.end()))
         {
+            rep_range_low = std::max(rep_range_low, target.rir);
+            std::cout << rep_range_low << ' ' << target.rir << '\n';
             auto target_max = find_closet(rep_and_weight, rep_range_low);
+
+            std::cout << target_max->first + 1 << ' ' << target.rir << '\n';
+            if (target_max->first <= target.rir)
+            {
+                if (target_max != rep_and_weight.end()) { ++target_max; }
+                else { std::cerr << "ERROR: target RIR is larger than target reps and program cannot adjust"; }
+            }
             
             target.weight = target_max->second;
             target.reps = target_max->first + 1 - target.rir;
@@ -239,7 +248,7 @@ int main()
     if (!weights_loaded && retrieve_response("\nWould you like to save the information of what weights you have available? (y/n)\n"))
     {
         std::ofstream temp("weights.txt");
-        if (!temp.is_open()) { std::cout << "ERROR: Couldn't save weights to file\n"; }
+        if (!temp.is_open()) { std::cerr << "ERROR: Couldn't save weights to file\n"; }
         temp << precision_size << ',';
         for (auto x : weight_and_rep)
         {
