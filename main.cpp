@@ -111,6 +111,13 @@ auto find_closet(const std::map<T, T2>& x, copy_fast_t<T> val)
     return res;
 }
 
+int find_precision(double x)
+{
+    int res = 0;
+    for(; (x - unsigned(x)) != 0; x *= 10, ++res) { }
+    return res;
+}
+
 int main()
 {
     Performance last, target;
@@ -164,36 +171,41 @@ int main()
         {
             if (retrieve_response("\nDo you have a continous range of weights available for this excercise? (y/n)\n"))
             {
-                std::string increment_distance;
+                double increment;
 
                 std::cout << "\nWhat is the smallest weight you have?\n";
                 std::cin >> lower_weight_bound;
                 std::cout << "\nWhat is the largest weight you have?\n";
                 std::cin >> upper_weight_bound;
                 std::cout <<"\nHow large is the increment between each weight in this range?\n";
-                std::cin >> increment_distance;
+                std::cin >> increment;
                 
-                auto distance = increment_distance.find('.');
-                precision_size += (distance != std::string::npos) * (increment_distance.length() - distance - 1);
-                double temp, inc = std::stod(increment_distance);
+                precision_size += find_precision(increment);
                 
-                for (double i = lower_weight_bound; i <= upper_weight_bound; i+=inc)
+                double temp_d;
+                int temp_i;
+                for (double i = lower_weight_bound; i <= upper_weight_bound; i+=increment)
                 {
-                    if ((temp = estimate_rm(i, max_weight)) < 0) { break; }
-                    weight_and_rep.emplace(i, temp);
-                    rep_and_weight.emplace(temp, i);
+                    if ((temp_d = estimate_rm(i, max_weight)) < 0) { break; }
+                    weight_and_rep.emplace(i, temp_d);
+                    rep_and_weight.emplace(temp_d, i);
+                    temp_i = find_precision(i);
+                    if (temp_i > precision_size) { precision_size = temp_i; }
                 }
             }
             else
             {
                 std::cout << "\nPlease enter each weight you have seperated by a comma\n";
                 std::cin >> resp;
-                split(resp, ',', [&weight_and_rep, &rep_and_weight, max_weight](const std::string& str){ 
+                split(resp, ',', [&weight_and_rep, &rep_and_weight, &precision_size, max_weight](const std::string& str){ 
                     double temp_weight = std::stod(str), temp_est;
+                    int temp_prec = find_precision(temp_weight);
+                    
                     if ((temp_est = estimate_rm(temp_weight, max_weight)) >= 0)
                     {
                         weight_and_rep.emplace(temp_weight, temp_est); 
                         rep_and_weight.emplace(temp_est, temp_weight);
+                        if (temp_prec > precision_size) { precision_size = temp_prec; }
                     }
                 });
             }
@@ -212,14 +224,12 @@ int main()
         if ((last.reps + last.rir >= rep_range_upp) || (last.reps + last.rir + 1 < rep_range_low) || (weight_and_rep.find(last.weight) == weight_and_rep.end()))
         {
             rep_range_low = std::max(rep_range_low, target.rir);
-            std::cout << rep_range_low << ' ' << target.rir << '\n';
             auto target_max = find_closet(rep_and_weight, rep_range_low);
 
-            std::cout << target_max->first + 1 << ' ' << target.rir << '\n';
             if (target_max->first <= target.rir)
             {
                 if (target_max != rep_and_weight.end()) { ++target_max; }
-                else { std::cerr << "ERROR: target RIR is larger than target reps and program cannot adjust"; }
+                else { std::cerr << "ERROR: target RIR is larger than target reps in such a way that the program cannot adjust"; }
             }
             
             target.weight = target_max->second;
