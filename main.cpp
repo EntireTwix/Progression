@@ -39,7 +39,7 @@ bool retrieve_response(const std::string& question)
 struct Performance
 {
     double weight = 0;
-    unsigned reps = 0, rir = 0;
+    double reps = 0, rir = 0;
 };
 
 constexpr double brzycki_est(Performance x) { return x.weight / (1.0278 - (0.0278 * (x.reps + x.rir))); }
@@ -47,9 +47,9 @@ constexpr double epley_est(Performance x) { return x.weight * (1 + ((x.reps + x.
 constexpr double rev_brzycki_est(double weight, double max_weight) { return -(((weight / max_weight) - 1.0278) / 0.0278); }
 constexpr double rev_epley_est(double weight, double max_weight) { return ((30 * max_weight) / weight) - 30; }
 
-double estimate_rm(Performance x)
+constexpr double estimate_rm(Performance x)
 {
-    double max_weight;
+    double max_weight = 0;
     unsigned rep_adj = x.reps + x.rir;
     
     if (rep_adj <= 8)
@@ -68,10 +68,10 @@ double estimate_rm(Performance x)
     return max_weight;
 }
 
-double estimate_rm(double weight, double max_weight)
+constexpr double estimate_rm(double weight, double max_weight)
 {
     double brzycki_threshold = max_weight * 0.8054;
-    double epley_threshold = max_weight / (1 + (1/3.0));
+    double epley_threshold = max_weight / (1.0 + (1.0 / 3.0));
     
     if (weight >= brzycki_threshold)
     {
@@ -114,7 +114,7 @@ auto find_closet(const std::map<T, T2>& x, copy_fast_t<T> val)
 int find_precision(double x)
 {
     int res = 0;
-    for(; (x - unsigned(x)) != 0; x *= 10, ++res) { }
+    for(; x != unsigned(x); x *= 10, ++res) { }
     return res;
 }
 
@@ -213,7 +213,7 @@ int main()
     }
 
     {
-        unsigned rep_range_low, rep_range_upp;
+        double rep_range_low, rep_range_upp;
         std::cout << "\nHow many reps in reserve are you aiming for? (input 0 if unsure)\n";
         std::cin >> target.rir;
         std::cout << "\nWhat is the lower bound of your rep range? (input 8 if unsure)\n";
@@ -294,10 +294,13 @@ int main()
     size_t j = 1;
     for (auto set : warmup_sets)
     {
+        if (set.second < 0.5) { break; }
+        // ok to round up for warm up because very submaximal load
         std::cout << "\nWarmup " << j++ << "    : " << std::setw(largest_weight_length) << set.first << "lb for " << unsigned(std::round(set.second));
     }
 
-    std::cout << "\n\nWorking set : " << std::setw(largest_weight_length) << target.weight << "lb for " << target.reps << '\n';
+    // not ok to round up for rep because 0.9 reps for a weight where you fail sticking point is not a 1 RM for example
+    std::cout << "\n\nWorking set : " << std::setw(largest_weight_length) << target.weight << "lb for " << unsigned(target.reps) << '\n';
 
     return 0;
 }
