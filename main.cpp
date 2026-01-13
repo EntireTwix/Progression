@@ -287,13 +287,23 @@ int main()
         }
     }
 
-    std::cout << "\nEstimated 1RM based on last performance: " << max_weight << "lb\n";
+    
+    auto percentage_warmup = [max_weight, &weight_and_rep](long double intended_percentage, long double intended_reps, std::vector<std::pair<long double, long double>>& sets) {
 
-    auto percentage_warmup = [max_weight, &weight_and_rep](long double intended_percentage, long double intended_reps, std::vector<std::pair<long double, long double>>& sets){
-        
         auto reduced_weight = intended_percentage * max_weight;
         auto reduced_rm = estimate_rm(reduced_weight, max_weight);
         auto closest_weight = find_closet(weight_and_rep, reduced_weight);
+        
+        std::cout << "[Last Weight's Reps " << sets.back().second << " vs This Weight's Reps " << ((intended_reps / reduced_rm) * closest_weight->second) << "]\n";
+        if ((sets.back().first == closest_weight->first) && (unsigned(std::round(sets.back().second)) >= unsigned(std::round((intended_reps / reduced_rm) * closest_weight->second))))
+        {
+            std::cout << "[Erasing " << closest_weight->first << "lb from Available Weights]\n";
+            
+            weight_and_rep.erase(closest_weight);
+            reduced_weight = intended_percentage * max_weight;
+            reduced_rm = estimate_rm(reduced_weight, max_weight);
+            closest_weight = find_closet(weight_and_rep, reduced_weight);
+        }
 
         if (closest_weight != weight_and_rep.end())
         {
@@ -301,16 +311,17 @@ int main()
             std::cout << "[Looking for " << intended_percentage * 100 << "% of 1RM or " << reduced_weight 
                   << "lb]\n[Estimated Rep Max for " << reduced_weight << "lb is " << reduced_rm
                   << "]\n[Closest Weight Found: " << closest_weight->first << "lb for " << closest_weight->second << "]\n"
-                  << "[" << intended_reps << " rep at " << reduced_weight << "lb -> " << (intended_reps / reduced_rm) * closest_weight->second << " rep at " << closest_weight->first << "lb]\n";
+                  << "[" << intended_reps << " rep at " << reduced_weight << "lb -> " << (intended_reps / reduced_rm) * closest_weight->second << " rep at " << closest_weight->first << "lb]\n\n";
     
-            // std::cout << "[Erasing " << closest_weight->first << "lb from Available Weights]\n\n";
-            // weight_and_rep.erase(closest_weight);
+            // std::cout << "[Erasing " << closest_weight->first << "lb from Available Weights]\n";
+            // weight_and_rep.erase(closest_weight);            
         }
-    };
 
+    };
+                
     std::vector<std::pair<long double, long double>> warmup_sets;
     warmup_sets.reserve(5);
-
+    
     percentage_warmup(0.4, 5, warmup_sets);
     percentage_warmup(0.5, 5, warmup_sets);
     percentage_warmup(0.6, 3, warmup_sets);
@@ -325,12 +336,11 @@ int main()
         }
     }
 
-    size_t j = 1;
-    std::cout << std::setprecision(precision_size);
-    for (auto set : warmup_sets)
+    std::cout << "\nEstimated 1RM based on last performance: " << max_weight << "lb\n" << std::setprecision(precision_size);
+
+    for (size_t j = 0; (j < warmup_sets.size()) && (warmup_sets[j].second >= 0.5); ++j)
     {
-        if (set.second < 0.5) { break; }
-        std::cout << "\nWarmup " << j++ << "    : " << std::setw(largest_weight_length) << set.first << "lb for " << unsigned(std::round(set.second));
+        std::cout << "\nWarmup " << j + 1    << "    : " << std::setw(largest_weight_length) << warmup_sets[j].first << "lb for " << unsigned(std::round(warmup_sets[j].second));
     }
 
     std::cout << "\n\nWorking set : " << std::setw(largest_weight_length) << target.weight << "lb for " << unsigned(target.reps) << '\n';
