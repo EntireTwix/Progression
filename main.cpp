@@ -50,7 +50,7 @@ constexpr double rev_epley_est(double weight, double max_weight) { return ((30 *
 constexpr double estimate_rm(Performance x)
 {
     double max_weight = 0;
-    unsigned rep_adj = x.reps + x.rir;
+    double rep_adj = x.reps + x.rir;
     
     if (rep_adj <= 8)
     {
@@ -111,12 +111,7 @@ auto find_closet(const std::map<T, T2>& x, copy_fast_t<T> val)
     return res;
 }
 
-int find_precision(double x)
-{
-    int res = 0;
-    for(; x != unsigned(x); x *= 10, ++res) { }
-    return res;
-}
+size_t find_precision(const std::string& x) { return x.length() - x.find('.') - 1; }
 
 int main()
 {
@@ -171,6 +166,7 @@ int main()
         {
             if (retrieve_response("\nDo you have a continous range of weights available for this excercise? (y/n)\n"))
             {
+                std::string increment_str;
                 double increment;
 
                 std::cout << "\nWhat is the smallest weight you have?\n";
@@ -178,9 +174,10 @@ int main()
                 std::cout << "\nWhat is the largest weight you have?\n";
                 std::cin >> upper_weight_bound;
                 std::cout <<"\nHow large is the increment between each weight in this range?\n";
-                std::cin >> increment;
+                std::cin >> increment_str;
+                increment = std::stod(increment_str);
                 
-                precision_size += find_precision(increment);
+                precision_size += find_precision(increment_str);
                 
                 double temp_d;
                 int temp_i;
@@ -189,7 +186,7 @@ int main()
                     if ((temp_d = estimate_rm(i, max_weight)) < 0) { break; }
                     weight_and_rep.emplace(i, temp_d);
                     rep_and_weight.emplace(temp_d, i);
-                    temp_i = find_precision(i);
+                    temp_i = find_precision(std::to_string(i));
                     if (temp_i > precision_size) { precision_size = temp_i; }
                 }
             }
@@ -198,8 +195,8 @@ int main()
                 std::cout << "\nPlease enter each weight you have seperated by a comma\n";
                 std::cin >> resp;
                 split(resp, ',', [&weight_and_rep, &rep_and_weight, &precision_size, max_weight](const std::string& str){ 
+                    int temp_prec = find_precision(str);
                     double temp_weight = std::stod(str), temp_est;
-                    int temp_prec = find_precision(temp_weight);
                     
                     if ((temp_est = estimate_rm(temp_weight, max_weight)) >= 0)
                     {
@@ -272,14 +269,15 @@ int main()
         auto reduced_weight = intended_percentage * max_weight;
         auto reduced_rm = estimate_rm(reduced_weight, max_weight);
         auto closest_weight = find_closet(weight_and_rep, reduced_weight);
-        sets.push_back({closest_weight->first, (intended_reps / reduced_rm) * closest_weight->second});
+        sets.emplace_back(closest_weight->first, (intended_reps / reduced_rm) * closest_weight->second);
     };
 
     std::vector<std::pair<double, double>> warmup_sets;
+    warmup_sets.reserve(5);
 
     percentage_warmup(0.4, 5, warmup_sets);
     percentage_warmup(0.5, 5, warmup_sets);
-    percentage_warmup(0.6, 3, warmup_sets);
+    percentage_warmup(0.62, 3, warmup_sets);
 
     if ((target.weight / max_weight) >= 0.75)
     {
