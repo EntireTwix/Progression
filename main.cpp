@@ -38,19 +38,19 @@ bool retrieve_response(const std::string& question)
 
 struct Performance
 {
-    double weight = 0;
-    double reps = 0, rir = 0;
+    long double weight = 0;
+    long double reps = 0, rir = 0;
 };
 
-constexpr double brzycki_est(Performance x) { return x.weight / (1.0278 - (0.0278 * (x.reps + x.rir))); }
-constexpr double epley_est(Performance x) { return x.weight * (1 + ((x.reps + x.rir) / 30.0)); }
-constexpr double rev_brzycki_est(double weight, double max_weight) { return -(((weight / max_weight) - 1.0278) / 0.0278); }
-constexpr double rev_epley_est(double weight, double max_weight) { return ((30 * max_weight) / weight) - 30; }
+constexpr long double brzycki_est(Performance x) { return x.weight / (1.0278 - (0.0278 * (x.reps + x.rir))); }
+constexpr long double epley_est(Performance x) { return x.weight * (1 + ((x.reps + x.rir) / 30.0)); }
+constexpr long double rev_brzycki_est(long double weight, long double max_weight) { return -(((weight / max_weight) - 1.0278) / 0.0278); }
+constexpr long double rev_epley_est(long double weight, long double max_weight) { return ((30 * max_weight) / weight) - 30; }
 
-constexpr double estimate_rm(Performance x)
+constexpr long double estimate_rm(Performance x)
 {
-    double max_weight = 0;
-    double rep_adj = x.reps + x.rir;
+    long double max_weight = 0;
+    long double rep_adj = x.reps + x.rir;
     
     if (rep_adj <= 8)
     {
@@ -68,10 +68,10 @@ constexpr double estimate_rm(Performance x)
     return max_weight;
 }
 
-constexpr double estimate_rm(double weight, double max_weight)
+constexpr long double estimate_rm(long double weight, long double max_weight)
 {
-    double brzycki_threshold = max_weight * 0.8054;
-    double epley_threshold = max_weight / (1.0 + (1.0 / 3.0));
+    long double brzycki_threshold = max_weight * 0.8054;
+    long double epley_threshold = max_weight / (1.0 + (1.0 / 3.0));
     
     if (weight >= brzycki_threshold)
     {
@@ -83,7 +83,7 @@ constexpr double estimate_rm(double weight, double max_weight)
     }
     else
     {
-        double epley_mult = (brzycki_threshold - weight) / (brzycki_threshold - epley_threshold);
+        long double epley_mult = (brzycki_threshold - weight) / (brzycki_threshold - epley_threshold);
         
         return (epley_mult * rev_epley_est(weight, max_weight)) + ((1 - epley_mult) * rev_brzycki_est(weight, max_weight));
     }
@@ -111,20 +111,30 @@ auto find_closet(const std::map<T, T2>& x, copy_fast_t<T> val)
     return res;
 }
 
-size_t find_precision(const std::string& x) { return x.length() - x.find('.') - 1; }
+size_t find_precision(const std::string& x) 
+{ 
+    auto location = x.find('.');
+    if (location != std::string::npos)
+    {
+        return x.length() - location - 1; 
+    }
+    else
+    {
+        return 0;
+    }
+}
 
 int main()
 {
     Performance last, target;
-    double max_weight;
-    std::map<double, double> weight_and_rep, rep_and_weight;
+    long double max_weight;
+    std::map<long double, long double> weight_and_rep, rep_and_weight;
     bool weights_loaded = false;
     std::cout << std::fixed;
     int precision_size = 0;
     
     {
         std::string resp;
-        double lower_weight_bound, upper_weight_bound;
     
         std::cout << "How much weight did you lift last performance?\n";
         std::cin >> last.weight;
@@ -134,12 +144,15 @@ int main()
         std::cin >> last.rir;
         max_weight = estimate_rm(last);
 
+        std::cout << "\n[Calculating 1RM]\n";
+
         {
             std::ifstream temp("weights.txt");
-            double line_d;
+            long double line_d;
             std::string line;
             if (temp.is_open())
             {
+                std::cout << "[Found Weights File]\n";
                 if (retrieve_response("\nWould you like to load your stored weight values? (y/n)\n"))                   
                 {
                     
@@ -147,7 +160,7 @@ int main()
                     int line_i = std::stoi(line);
                     precision_size = line_i;
                     
-                    double temp_est;
+                    long double temp_est;
                     while (std::getline(temp, line, ','))
                     {
                         line_d = std::stod(line);
@@ -158,6 +171,8 @@ int main()
                     }
                     temp.close();
                     weights_loaded = true;
+
+                    std::cout << "[Weights Loaded]\n";
                 }
             }
         }
@@ -166,28 +181,31 @@ int main()
         {
             if (retrieve_response("\nDo you have a continous range of weights available for this excercise? (y/n)\n"))
             {
-                std::string increment_str;
-                double increment;
+                std::string lower_weight_bound_str, upper_weight_bound_str, increment_str;
+                long double lower_weight_bound, upper_weight_bound, increment;
 
                 std::cout << "\nWhat is the smallest weight you have?\n";
-                std::cin >> lower_weight_bound;
+                std::cin >> lower_weight_bound_str;
                 std::cout << "\nWhat is the largest weight you have?\n";
-                std::cin >> upper_weight_bound;
+                std::cin >> upper_weight_bound_str;
                 std::cout <<"\nHow large is the increment between each weight in this range?\n";
                 std::cin >> increment_str;
+
+                lower_weight_bound = std::stod(lower_weight_bound_str);
+                upper_weight_bound = std::stod(upper_weight_bound_str);
                 increment = std::stod(increment_str);
                 
-                precision_size += find_precision(increment_str);
-                
-                double temp_d;
-                int temp_i;
-                for (double i = lower_weight_bound; i <= upper_weight_bound; i+=increment)
+                precision_size += std::max(find_precision(increment_str), std::max(find_precision(lower_weight_bound_str), find_precision(upper_weight_bound_str)));
+                if (precision_size) { std::cout << "\n[Updating Display Precision to " << precision_size << "]"; }
+
+                std::cout << "\n[Generating Weights Range]\n";
+                long double temp_est, temp_weight;
+                for (size_t i = 0; i < ((upper_weight_bound - lower_weight_bound) / increment) + 1; ++i)
                 {
-                    if ((temp_d = estimate_rm(i, max_weight)) < 0) { break; }
-                    weight_and_rep.emplace(i, temp_d);
-                    rep_and_weight.emplace(temp_d, i);
-                    temp_i = find_precision(std::to_string(i));
-                    if (temp_i > precision_size) { precision_size = temp_i; }
+                    temp_weight = lower_weight_bound + (i * increment);
+                    if ((temp_est = estimate_rm(temp_weight, max_weight)) < 0) { break; }
+                    weight_and_rep.emplace(temp_weight, temp_est);
+                    rep_and_weight.emplace(temp_est, temp_weight);
                 }
             }
             else
@@ -196,21 +214,27 @@ int main()
                 std::cin >> resp;
                 split(resp, ',', [&weight_and_rep, &rep_and_weight, &precision_size, max_weight](const std::string& str){ 
                     int temp_prec = find_precision(str);
-                    double temp_weight = std::stod(str), temp_est;
+                    long double temp_weight = std::stod(str), temp_est;
                     
                     if ((temp_est = estimate_rm(temp_weight, max_weight)) >= 0)
                     {
+                        std::cout << "[Loaded " + str << "lb with Rep Estimate of " << temp_est << "]\n";
                         weight_and_rep.emplace(temp_weight, temp_est); 
                         rep_and_weight.emplace(temp_est, temp_weight);
-                        if (temp_prec > precision_size) { precision_size = temp_prec; }
+                        if (temp_prec > precision_size) 
+                        {
+                            precision_size = temp_prec; 
+                            std::cout << "[Updating Display Precision to " << temp_prec << " to Represent " << str << "]\n"; 
+                        }
                     }
                 });
             }
         }
+        std::cout << '[' << weight_and_rep.size() << " Weights Available]\n";
     }
 
     {
-        double rep_range_low, rep_range_upp;
+        long double rep_range_low, rep_range_upp;
         std::cout << "\nHow many reps in reserve are you aiming for? (input 0 if unsure)\n";
         std::cin >> target.rir;
         std::cout << "\nWhat is the lower bound of your rep range? (input 8 if unsure)\n";
@@ -220,6 +244,7 @@ int main()
         
         if ((last.reps + last.rir >= rep_range_upp) || (last.reps + last.rir + 1 < rep_range_low) || (weight_and_rep.find(last.weight) == weight_and_rep.end()))
         {
+            std::cout << "[Finding Appropriate Weight for Desired Intensity]\n";
             rep_range_low = std::max(rep_range_low, target.rir);
             auto target_max = find_closet(rep_and_weight, rep_range_low);
 
@@ -265,19 +290,19 @@ int main()
 
     std::cout << "\nEstimated 1RM based on last performance: " << max_weight << "lb\n" << std::setprecision(precision_size);
 
-    auto percentage_warmup = [max_weight, &weight_and_rep](double intended_percentage, unsigned intended_reps, std::vector<std::pair<double, double>>& sets){
+    auto percentage_warmup = [max_weight, &weight_and_rep](long double intended_percentage, unsigned intended_reps, std::vector<std::pair<long double, long double>>& sets){
         auto reduced_weight = intended_percentage * max_weight;
         auto reduced_rm = estimate_rm(reduced_weight, max_weight);
         auto closest_weight = find_closet(weight_and_rep, reduced_weight);
         sets.emplace_back(closest_weight->first, (intended_reps / reduced_rm) * closest_weight->second);
     };
 
-    std::vector<std::pair<double, double>> warmup_sets;
+    std::vector<std::pair<long double, long double>> warmup_sets;
     warmup_sets.reserve(5);
 
     percentage_warmup(0.4, 5, warmup_sets);
     percentage_warmup(0.5, 5, warmup_sets);
-    percentage_warmup(0.62, 3, warmup_sets);
+    percentage_warmup(0.6, 3, warmup_sets);
 
     if ((target.weight / max_weight) >= 0.75)
     {
