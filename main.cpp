@@ -9,20 +9,6 @@
 #include <iomanip>
 #include <type_traits>
 
-template <typename T>
-inline std::vector<std::string> split(const std::string &inp, char delim, T &&func)
-{
-    std::stringstream ss(inp);
-    std::vector<std::string> res;
-    std::string line;
-    while (std::getline(ss, line, delim))
-    {
-        func(line);
-        res.push_back(line);
-    }
-    return res;
-}
-
 bool retrieve_response(const std::string& question)
 {
     std::string str;
@@ -150,7 +136,7 @@ int main()
             std::string line;
             if (temp.is_open())
             {
-                std::cout << "[Found Weights File]\n";
+                std::cout << "\n[Found Weights File]\n";
                 if (retrieve_response("\nWould you like to load your stored weight values? (y/n)\n"))                   
                 {
                     
@@ -161,7 +147,7 @@ int main()
                     long double temp_est;
                     while (std::getline(temp, line, ','))
                     {
-                        line_d = std::stod(line);
+                        line_d = std::stold(line);
                         temp_est = estimate_rm(line_d, max_weight);
                         if (temp_est < 0) { break; }
                         weight_and_rep.emplace(line_d, estimate_rm(line_d, max_weight));
@@ -170,7 +156,7 @@ int main()
                     temp.close();
                     weights_loaded = true;
 
-                    std::cout << "[Weights Loaded]\n";
+                    std::cout << "\n[Weights Loaded]\n";
                 }
             }
         }
@@ -189,9 +175,9 @@ int main()
                 std::cout <<"\nHow large is the increment between each weight in this range?\n";
                 std::cin >> increment_str;
 
-                lower_weight_bound = std::stod(lower_weight_bound_str);
-                upper_weight_bound = std::stod(upper_weight_bound_str);
-                increment = std::stod(increment_str);
+                lower_weight_bound = std::stold(lower_weight_bound_str);
+                upper_weight_bound = std::stold(upper_weight_bound_str);
+                increment = std::stold(increment_str);
                 
                 precision_size += std::max(find_precision(increment_str), std::max(find_precision(lower_weight_bound_str), find_precision(upper_weight_bound_str)));
                 if (precision_size) { std::cout << "\n[Updating Display Precision to " << precision_size << "]"; }
@@ -208,24 +194,24 @@ int main()
             }
             else
             {
-                std::cout << "\nPlease enter each weight you have seperated by a comma\n";
-                std::cin >> resp;
-                split(resp, ',', [&weight_and_rep, &rep_and_weight, &precision_size, max_weight](const std::string& str){ 
-                    int temp_prec = find_precision(str);
-                    long double temp_weight = std::stod(str), temp_est;
+                std::cout << "\nPlease enter each weight you have, ending by typing \"END\"\n";
+                while (std::cin >> resp, resp != "END") 
+                {   
+                    int temp_prec = find_precision(resp);
+                    long double temp_weight = std::stold(resp), temp_est;
                     
                     if ((temp_est = estimate_rm(temp_weight, max_weight)) >= 0)
                     {
-                        std::cout << "[Loaded " + str << "lb with Rep Estimate of " << temp_est << "]\n";
+                        std::cout << "[Loaded " + resp << "lb with Rep Estimate of " << temp_est << "]\n";
                         weight_and_rep.emplace(temp_weight, temp_est); 
                         rep_and_weight.emplace(temp_est, temp_weight);
                         if (temp_prec > precision_size) 
                         {
                             precision_size = temp_prec; 
-                            std::cout << "[Updating Display Precision to " << temp_prec << " to Represent " << str << "]\n"; 
+                            std::cout << "[Updating Display Precision to " << temp_prec << " to Represent " << resp << "]\n"; 
                         }
                     }
-                });
+                }
             }
         }
         std::cout << '[' << weight_and_rep.size() << " Weights Available]\n";
@@ -294,10 +280,10 @@ int main()
         auto reduced_rm = estimate_rm(reduced_weight, max_weight);
         auto closest_weight = find_closet(weight_and_rep, reduced_weight);
         
-        std::cout << "[Last Weight's Reps " << sets.back().second << " vs This Weight's Reps " << ((intended_reps / reduced_rm) * closest_weight->second) << "]\n";
+        // std::cout << "[Last Weight's Reps " << sets.back().second << " vs This Weight's Reps " << ((intended_reps / reduced_rm) * closest_weight->second) << "]\n";
         if ((sets.back().first == closest_weight->first) && (unsigned(std::round(sets.back().second)) >= unsigned(std::round((intended_reps / reduced_rm) * closest_weight->second))))
         {
-            std::cout << "[Erasing " << closest_weight->first << "lb from Available Weights]\n";
+            std::cout << "\n[Erasing " << closest_weight->first << "lb from Available Weights]\n";
             
             weight_and_rep.erase(closest_weight);
             reduced_weight = intended_percentage * max_weight;
@@ -305,13 +291,13 @@ int main()
             closest_weight = find_closet(weight_and_rep, reduced_weight);
         }
 
-        if (closest_weight != weight_and_rep.end())
+        if ((closest_weight != weight_and_rep.end()) && (!sets.size() || (closest_weight->first >= sets.back().first)))
         {
             sets.emplace_back(closest_weight->first, (intended_reps / reduced_rm) * closest_weight->second);
-            std::cout << "[Looking for " << intended_percentage * 100 << "% of 1RM or " << reduced_weight 
+            std::cout << "\n[Looking for " << intended_percentage * 100 << "% of 1RM or " << reduced_weight 
                   << "lb]\n[Estimated Rep Max for " << reduced_weight << "lb is " << reduced_rm
                   << "]\n[Closest Weight Found: " << closest_weight->first << "lb for " << closest_weight->second << "]\n"
-                  << "[" << intended_reps << " rep at " << reduced_weight << "lb -> " << (intended_reps / reduced_rm) * closest_weight->second << " rep at " << closest_weight->first << "lb]\n\n";
+                  << "[" << intended_reps << " rep at " << reduced_weight << "lb -> " << (intended_reps / reduced_rm) * closest_weight->second << " rep at " << closest_weight->first << "lb]\n";
     
             // std::cout << "[Erasing " << closest_weight->first << "lb from Available Weights]\n";
             // weight_and_rep.erase(closest_weight);            
