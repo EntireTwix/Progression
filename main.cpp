@@ -163,7 +163,7 @@ int main()
         
         if (!weights_loaded)
         {
-            if (retrieve_response("\nDo you have a continous range of weights available for this excercise? (y/n)\n"))
+            if (retrieve_response("\nAre the weights available for this excercise evenly spaced? (y/n)\n"))
             {
                 std::string lower_weight_bound_str, upper_weight_bound_str, increment_str;
                 long double lower_weight_bound, upper_weight_bound, increment;
@@ -252,7 +252,7 @@ int main()
                   << "\n[Selecting " << target.weight << "lb as Working Weight]\n\n";
     }
     
-    int largest_weight_length = std::to_string(unsigned(std::round(max_weight))).length() + precision_size + 1;
+    int largest_weight_length = std::to_string(unsigned(std::roundl(max_weight))).length() + precision_size + 1;
     int largest_rep_length = std::to_string(unsigned(weight_and_rep.begin()->second)).length();
 
     for (auto x : weight_and_rep)
@@ -281,7 +281,7 @@ int main()
         auto closest_weight = find_closet(weight_and_rep, reduced_weight);
         
         // std::cout << "[Last Weight's Reps " << sets.back().second << " vs This Weight's Reps " << ((intended_reps / reduced_rm) * closest_weight->second) << "]\n";
-        if ((sets.back().first == closest_weight->first) && (unsigned(std::round(sets.back().second)) >= unsigned(std::round((intended_reps / reduced_rm) * closest_weight->second))))
+        if ((sets.back().first == closest_weight->first) && (unsigned(std::roundl(sets.back().second)) >= unsigned(std::roundl((intended_reps / reduced_rm) * closest_weight->second))))
         {
             std::cout << "\n[Erasing " << closest_weight->first << "lb from Available Weights]\n";
             
@@ -326,10 +326,11 @@ int main()
 
     for (size_t j = 0; (j < warmup_sets.size()) && (warmup_sets[j].second >= 0.5); ++j)
     {
-        std::cout << "\nWarmup " << j + 1    << "    : " << std::setw(largest_weight_length) << warmup_sets[j].first << "lb for " << unsigned(std::round(warmup_sets[j].second));
+        std::cout << "\nWarmup " << j + 1    << "    : " << std::setw(largest_weight_length) << warmup_sets[j].first << "lb for " << unsigned(std::roundl(warmup_sets[j].second));
     }
 
-    std::cout << "\n\nWorking set : " << std::setw(largest_weight_length) << target.weight << "lb for " << unsigned(target.reps) << '\n';
+    // adding 0.001 as manual hedge against floating point errors
+    std::cout << "\n\nWorking set : " << std::setw(largest_weight_length) << target.weight << "lb for " << unsigned(target.reps + 0.001) << '\n';
 
     return 0;
 }
