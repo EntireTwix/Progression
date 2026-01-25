@@ -82,18 +82,25 @@ template <typename T>
 using copy_fast_t = typename copy_fast<T>::type;
 
 template <typename T, typename T2>
-auto find_closet(const std::map<T, T2>& x, copy_fast_t<T> val)
+auto find_closet(const std::map<T, T2>& map, copy_fast_t<T> val)
 {
-    auto res = x.lower_bound(val);
-    // std::cout << '\n' << res->first << ' ' << ' ' << res->second;
-            
-    if ((res != x.begin()) && 
-    (std::abs(std::prev(res)->first - val) < std::abs(res->first - val)))
+    auto res = map.lower_bound(val);
+    // std::cout << "map size: " << map.size() << '\n';
+    // std::cout << val << ' ' << res->first << ' ' << ' ' << res->second << '\n';
+
+    // std::cout << std::prev(res)->first << ' ' << std::prev(res)->second << '\n';
+    // std::cout << std::next(res)->first << ' ' << std::next(res)->second << '\n';
+
+    if (res == map.end() || ((res != map.begin()) && 
+    (std::abs(std::prev(res)->first - val) < std::abs(res->first - val))))
     { 
         --res;
-        // std::cout << "->" << res->first << ' ' << res->second;
+        std::cout << "->" << res->first << ' ' << res->second << '\n';
     }
 
+    // if (res == map.begin()) { std::cout << "\nres is begin()\n"; }
+    // if (res == map.end()) { std::cout << "\nres is end()\n"; }
+    
     return res;
 }
 
@@ -218,13 +225,17 @@ int main()
     }
 
     {
-        long double rep_range_low, rep_range_upp;
+        long double rep_range_low, rep_range_upp, sets;
         std::cout << "\nHow many reps in reserve are you aiming for? (input 0 if unsure)\n";
         std::cin >> target.rir;
+        // std::cout << "\nHow many sets are you going to do?\n";
+        // std::cin >> sets;
         std::cout << "\nWhat is the lower bound of your rep range? (input 8 if unsure)\n";
         std::cin >> rep_range_low;
         std::cout << "\nWhat is the upper bound of your rep range? (input 12 if unsure)\n";
         std::cin >> rep_range_upp;
+
+        // target.rir = (target.rir * 0.583265698) + (sets * -0.02273277698) + 0.5512321314; // Adjustment
         
         if ((last.reps + last.rir >= rep_range_upp) || (last.reps + last.rir + 1 < rep_range_low) || (weight_and_rep.find(last.weight) == weight_and_rep.end()))
         {
@@ -237,6 +248,8 @@ int main()
                 if (target_max != rep_and_weight.end()) { ++target_max; }
                 else { std::cerr << "ERROR: target RIR is larger than target reps in such a way that the program cannot adjust"; }
             }
+
+            // std::cout << "target_max " << target_max->first << ' ' << target_max->second << '\n';
             
             target.weight = target_max->second;
             target.reps = target_max->first + 1 - target.rir;
