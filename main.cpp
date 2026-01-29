@@ -84,7 +84,10 @@ using copy_fast_t = typename copy_fast<T>::type;
 template <typename T, typename T2>
 auto find_closet(const std::map<T, T2>& map, copy_fast_t<T> val)
 {
+    if (!map.size()) { return map.end(); }
+    
     auto res = map.lower_bound(val);
+
     // std::cout << "map size: " << map.size() << '\n';
     // std::cout << val << ' ' << res->first << ' ' << ' ' << res->second << '\n';
 
@@ -95,7 +98,7 @@ auto find_closet(const std::map<T, T2>& map, copy_fast_t<T> val)
     (std::abs(std::prev(res)->first - val) < std::abs(res->first - val))))
     { 
         --res;
-        std::cout << "->" << res->first << ' ' << res->second << '\n';
+        // std::cout << "->" << res->first << ' ' << res->second << '\n';
     }
 
     // if (res == map.begin()) { std::cout << "\nres is begin()\n"; }
@@ -298,14 +301,20 @@ int main()
         {
             std::cout << "\n[Erasing " << closest_weight->first << "lb from Available Weights]\n";
             
+            // std::cout << "A\n";
             weight_and_rep.erase(closest_weight);
+            // std::cout << "B\n";
             reduced_weight = intended_percentage * max_weight;
+            // std::cout << "C\n";
             reduced_rm = estimate_rm(reduced_weight, max_weight);
+            // std::cout << "D\n";
             closest_weight = find_closet(weight_and_rep, reduced_weight);
+            // std::cout << "E\n";
         }
 
         if ((closest_weight != weight_and_rep.end()) && (!sets.size() || (closest_weight->first >= sets.back().first)))
         {
+            // std::coutd << "F\n";
             sets.emplace_back(closest_weight->first, (intended_reps / reduced_rm) * closest_weight->second);
             std::cout << "\n[Looking for " << intended_percentage * 100 << "% of 1RM or " << reduced_weight 
                   << "lb]\n[Estimated Rep Max for " << reduced_weight << "lb is " << reduced_rm
