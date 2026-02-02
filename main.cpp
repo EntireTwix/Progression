@@ -48,8 +48,11 @@ constexpr long double estimate_rm(Performance x)
     }
     else
     {
-        max_weight = (brzycki_est(x) + epley_est(x)) / 2;
+        long double rep_mult = (10 - rep_adj) / (10 - 8);
+        max_weight = (brzycki_est(x) * rep_mult) + (epley_est(x) * (1 - rep_mult));
     }
+
+    // long double max_weight = ((rep_adj <= 8) * x.weight / (1.0278 - (0.0278 * (x.reps + x.rir)))) + ((rep_adj >= 10) * x.weight * (1 + ((x.reps + x.rir) / 30.0))) + (!((rep_adj <= 8) || (rep_adj >= 10)) * (brzycki_est(x) * ((10 - rep_adj) / (10 - 8))) + (epley_est(x) * (1 - ((10 - rep_adj) / (10 - 8)))))
     
     return max_weight;
 }
@@ -356,3 +359,5 @@ int main()
 
     return 0;
 }
+
+// 565
