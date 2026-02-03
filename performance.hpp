@@ -1,7 +1,5 @@
 #include <iostream>
 #include <type_traits>
-#include <cassert>
-#include <cmath>
 
 template <bool has_w, bool has_reps, bool has_rir, std::enable_if_t<(!has_w ^ !has_reps ^ !has_rir), bool> = true>
 struct PartialPerformance {};
@@ -103,7 +101,6 @@ public:
         else
         {
             deduced_weight = ((estimate_rm() * (1.0278 - (0.0278 * rep_adj))) * 0.5) + (((30 * estimate_rm()) / (30 + rep_adj)) * 0.5);
-            std::cout << brzycki_est << ' ' << epley_est << ' ' << Performance(deduced_weight, target_reps, target_rir).estimate_rm() << '\n';
         }
 
         return Performance(deduced_weight, target_reps, target_rir);
@@ -112,8 +109,8 @@ public:
     Performance complete(long double target_weight, std::nullptr_t target_reps, long double target_rir = 0) const noexcept
     {
         long double deduced_reps;
-        long double brzycki_threshold = estimate_rm() * ((-0.278 * target_rir) + 0.8054);
-        long double epley_threshold = (30 * estimate_rm()) / (target_rir + 40);
+        long double brzycki_threshold = estimate_rm() * 0.8054;
+        long double epley_threshold = estimate_rm() * 0.75;
         long double rev_brzycki_est = -(((target_weight / estimate_rm()) - 1.0278) / 0.0278) - target_rir;
         long double rev_epley_est = (((30 * estimate_rm()) / target_weight) - 30) - target_rir;
 
@@ -133,43 +130,9 @@ public:
         }
         else
         {       
-            // Gross result of ChatGPT usage because I haven't learned
-
-            long double lo = 8, hi = 10;
-            long double flo = Performance(target_weight, lo).estimate_rm() - estimate_rm();
-            long double fhi = Performance(target_weight, hi).estimate_rm() - estimate_rm();
-
-            if ((flo > 0.0L) == (fhi > 0.0L))
-            {
-                deduced_reps = (std::fabsl(flo) < std::fabsl(fhi)) ? lo : hi;
-            }
-            else
-            {
-                for (int i = 0; i < 100; ++i) 
-                {
-                    long double mid = (lo + hi) * 0.5L;
-                    long double fmid = Performance(target_weight, mid).estimate_rm() - estimate_rm();
-                
-                    if (std::fabsl(fmid) < 1e-12L || (hi - lo) < 1e-12L)
-                    {
-                        deduced_reps = mid;
-                        break;
-                    }
-                    
-                    if ((flo > 0.0L) == (fmid > 0.0L)) 
-                    {
-                        lo = mid; 
-                        flo = fmid;
-                    } 
-                    else 
-                    {
-                        hi = mid; 
-                        fhi = fmid;
-                    }
-                }
-
-                deduced_reps = (lo + hi) * 0.5L;
-            }
+            // Not an exact solution
+            long double epley_mult = (brzycki_threshold - target_weight) / (brzycki_threshold - epley_threshold);
+            deduced_reps = (epley_mult * rev_epley_est) + ((1 - epley_mult) * rev_brzycki_est);
         }
         
         return Performance(target_weight, deduced_reps, target_rir);
@@ -184,13 +147,7 @@ std::ostream& operator<<(std::ostream& os, Performance p)
 int main()
 {   
     Performance baseline(55, 10);
-    std::cout << baseline.estimate_rm() << '\n';
-    std::cout << baseline.complete(nullptr, 8) << '\n';
-    std::cout << baseline.complete(nullptr, 9) << '\n';
-    std::cout << baseline.complete(nullptr, 10) << '\n';
-    std::cout << baseline.complete(59.0627, nullptr) << '\n';
-    std::cout << baseline.complete(56.7171, nullptr) << '\n';
-    std::cout << baseline.complete(55, nullptr) << '\n';
+    
 
     return 0;
 }
