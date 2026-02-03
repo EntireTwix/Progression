@@ -7,30 +7,30 @@ struct PartialPerformance {};
 template <>
 struct PartialPerformance<false, true, true>
 {
-    long double reps;
-    long double rir;
+    long double reps = 0;
+    long double rir = 0;
 };
 
 template <>
 struct PartialPerformance<true, false, true>
 {
-    long double weight;
-    long double rir;
+    long double weight = 0;
+    long double rir = 0;
 };
 
 template <>
 struct PartialPerformance<true, true, false>
 {
-    long double weight;
-    long double reps;
+    long double weight = 0;
+    long double reps = 0;
 };
 
 class Performance
 {
 private:
-    long double weight;
-    long double reps;
-    long double rir;
+    long double weight = 0;
+    long double reps = 0;
+    long double rir = 0;
 
 public:
     Performance(long double init_weight, long double init_reps, long double init_rir = 0) noexcept : weight(init_weight), reps(init_reps), rir(init_rir) {}
@@ -39,10 +39,17 @@ public:
     long double get_reps() const noexcept { return this->reps; }
     long double get_rir() const noexcept { return this->rir; }
 
-    void set_reps(long double new_reps) 
-    { 
-        this->rir = (this->reps + this->rir) - new_reps; 
-        this->reps = new_reps;
+    // change weight while keeping relative intensity constant
+    void shift_weight(long double new_weight)
+    {
+        long double most_reps = this->reps + this->rir;
+
+        Performance temp(this->complete(new_weight, nullptr));
+        long double temp_most_reps = temp.reps;
+        temp.reps *= this->reps / most_reps;
+        temp.rir += (temp_most_reps - temp.reps);
+
+        *this = temp;
     }
 
     long double estimate_rm() const noexcept
@@ -161,17 +168,19 @@ int main()
 
     std::vector<Performance> warm_ups;
 
-    PartialPerformance<true, false> first_warmup{*my_weights.lower_bound(baseline.estimate_rm() * 0.4L)};
-    warm_ups.push_back(baseline.complete(first_warmup));
-    warm_ups.back().set_reps(5);
-    
-    first_warmup = {*my_weights.lower_bound(baseline.estimate_rm() * 0.5L)};
-    warm_ups.push_back(baseline.complete(first_warmup));
-    warm_ups.back().set_reps(5);
-    
-    first_warmup = {*my_weights.lower_bound(baseline.estimate_rm() * 0.6L)};
-    warm_ups.push_back(baseline.complete(first_warmup));
-    warm_ups.back().set_reps(3);
+    /*
+    5x40
+    5x25
+    3x16
+    */
+
+    for (auto w : std::vector<std::pair<long double, long double>>({{5, 40}, {5, 25}, {3, 16}}))
+    {
+        PartialPerformance<false, true, true> warmup_ideal{w.first, w.second};
+        Performance temp(baseline.complete(warmup_ideal));
+        temp.shift_weight(*my_weights.lower_bound(temp.get_weight()));
+        warm_ups.push_back(temp);
+    }
 
     for (auto p : warm_ups)
     {
