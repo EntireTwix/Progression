@@ -131,8 +131,7 @@ public:
         else
         {       
             // Not an exact solution
-            long double epley_mult = (brzycki_threshold - target_weight) / (brzycki_threshold - epley_threshold);
-            deduced_reps = (epley_mult * rev_epley_est) + ((1 - epley_mult) * rev_brzycki_est);
+            deduced_reps = ((target_weight / brzycki_threshold) - 1.226244224) / -0.02953801791;
         }
         
         return Performance(target_weight, deduced_reps, target_rir);
@@ -146,8 +145,9 @@ std::ostream& operator<<(std::ostream& os, Performance p)
 
 int main()
 {   
-    Performance baseline(55, 10);
-    
+    Performance baseline(55, 8);
+
+
 
     return 0;
 }
