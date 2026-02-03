@@ -173,16 +173,9 @@ int main()
 
     std::vector<Performance> warm_ups;
 
-    /*
-    5x40
-    5x25
-    3x16
-    */
-
-    for (auto w : std::vector<std::pair<long double, long double>>({{5, 40}, {5, 25}, {3, 16}}))
+    for (auto w : std::vector<std::pair<long double, long double>>({{5, 40}, {5, 25}, {3, (147 / 11.0L) + 3}, {2, 8}, {1, 4}}))
     {
-        PartialPerformance<false, true, true> warmup_ideal{w.first, w.second};
-        Performance temp(baseline.complete(warmup_ideal));
+        Performance temp(baseline.complete(nullptr, w.first, w.second));
         temp.shift_weight(*my_weights.lower_bound(temp.get_weight()));
         warm_ups.push_back(temp);
     }
