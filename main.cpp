@@ -61,26 +61,27 @@ constexpr long double estimate_rm(long double weight, long double max_weight)
 {
     long double brzycki_threshold = max_weight * 0.8054;
     long double epley_threshold = max_weight / (1.0 + (1.0 / 3.0));
+    long double reps = 0;
     
     if (weight >= brzycki_threshold)
     {
-        return rev_brzycki_est(weight, max_weight);
+        reps = rev_brzycki_est(weight, max_weight);
     }
     else if (weight <= epley_threshold)
     {
-        return rev_epley_est(weight, max_weight);
+        reps = rev_epley_est(weight, max_weight);
     }
     else
     {
-        long double epley_mult = (brzycki_threshold - weight) / (brzycki_threshold - epley_threshold);
-        
-        return (epley_mult * rev_epley_est(weight, max_weight)) + ((1 - epley_mult) * rev_brzycki_est(weight, max_weight));
+        reps = ((weight / brzycki_threshold) - 1.226244224) / -0.02953801791;
     }
+
+    return reps;
 }
 
 //copy_fast type metafunction
 template <typename T>
-struct copy_fast : std::conditional<std::is_trivially_copyable<T>::value, T, const T &>{};
+struct copy_fast : std::conditional<std::is_trivially_copyable_v<T>, T, const T &>{};
 template <typename T>
 using copy_fast_t = typename copy_fast<T>::type;
 
@@ -359,5 +360,3 @@ int main()
 
     return 0;
 }
-
-// 565
