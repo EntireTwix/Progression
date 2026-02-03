@@ -131,7 +131,7 @@ public:
         else
         {       
             // Not an exact solution
-            deduced_reps = ((target_weight / brzycki_threshold) - 1.226244224) / -0.02953801791;
+            deduced_reps = (((target_weight / brzycki_threshold) - 1.226244224) / -0.02953801791) - target_rir;
         }
         
         return Performance(target_weight, deduced_reps, target_rir);
@@ -142,13 +142,3 @@ std::ostream& operator<<(std::ostream& os, Performance p)
 { 
     return os << p.get_weight() << "lb × " << p.get_reps() << " with " << p.get_rir() << " RIR";
 }
-
-int main()
-{   
-    Performance baseline(55, 8);
-
-
-
-    return 0;
-}
-
