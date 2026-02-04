@@ -39,8 +39,8 @@ public:
     long double get_reps() const noexcept { return this->reps; }
     long double get_rir() const noexcept { return this->rir; }
 
-    // change weight while keeping relative intensity constant i.e 
-    void update_weight(long double new_weight) noexcept
+    // change weight while keeping effort constant i.e reps performed / reps possible
+    void shift_weight(long double new_weight) noexcept
     {
         long double most_reps = this->reps + this->rir;
 
@@ -51,6 +51,9 @@ public:
 
         *this = temp;
     }
+
+    // update weight while keeping rir constant
+    void update_weight(long double new_weight) noexcept { *this = this->complete(new_weight, nullptr, this->rir); }
 
     // update rir while keeping reps constant
     void update_reps(long double new_reps) noexcept { *this = this->complete(nullptr, new_reps, this->rir); }
