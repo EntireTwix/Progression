@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <cmath>
 
 class Performance
 {
@@ -32,6 +33,9 @@ public:
         return this->reps;
     }
 
+    long double increment_reps() noexcept { return ++this->reps; }
+    long double round_reps() noexcept { return this->reps = std::roundl(this->reps); }
+
     long double estimate_rm() const noexcept
     {
         long double max_weight;
@@ -53,7 +57,7 @@ public:
     }
 
     static long double percent_change(Performance a, Performance b) { return (b.estimate_rm() - a.estimate_rm()) / a.estimate_rm(); }
-
+    
     long double complete_weight(long double target_reps) const noexcept
     {
         long double deduced_weight;
@@ -114,7 +118,7 @@ public:
 
 std::ostream& operator<<(std::ostream& os, Performance p) 
 { 
-    return os << p.get_weight() << "lb × " << p.get_reps() << " : " << p.estimate_rm() << "lb";
+    return os << p.get_weight() << "lb × " << p.get_reps();
 }
 
 // -- new file --
@@ -179,30 +183,34 @@ int main()
     std::vector<long double> dads_barbell{11.1,21.1,31.1,41.1,51.1,61.1,71.1};
     std::vector<long double> dads_bands{-2.084745763,-5.211864407,-9.381355932,-12.50847458,-18.24152542,-11.46610169,-14.59322034,-21.88983051,-14.59322034,-17.72033898,-27.62288136,-7.296610169,-20.32627119,-23.45338983,-30.75};
     std::vector<long double> dads_backpack{6,11,16,21,26,31,36,41,46,51,56,61,66,71,76,81,86,91,96,101,106,111,116};
+    std::vector<long double> kristens_gym{8,10,12,15,20,25,30,35,40,45,50,55,60};
 
     long double my_bodyweight = 148.4;
     long double dads_bodyweight = 206;
-    unsigned rir = rir_heuristic(2);
-    Performance baseline(61.1260282001997, 8);    
-    auto weights(init_reps(baseline, my_weights));
+    Performance baseline(15, 17);    
+    unsigned rir = rir_heuristic(4);
+    auto weights(init_reps(baseline, kristens_gym));
 
-    Performance working_weight(find_working_weight(baseline, 8 + rir, 10 + rir, weights));
+    Performance working_weight(find_working_weight(baseline, 10 + rir, 15 + rir, weights));
 
     {
         Performance temp(0.4 * baseline.estimate_rm(), 5);
         temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
+        temp.round_reps();
         std::cout << temp << '\n';
     }
 
     {
         Performance temp(0.5 * baseline.estimate_rm(), 5);
         temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
+        temp.round_reps();
         std::cout << temp << '\n';
     }
 
     {
         Performance temp(0.6 * baseline.estimate_rm(), 3);
         temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
+        temp.round_reps();
         std::cout << temp << '\n';
     }
 
@@ -210,6 +218,7 @@ int main()
     {
         Performance temp(baseline.complete_weight(10), 2);
         temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
+        temp.round_reps();
         std::cout << temp << '\n';
     }
     
@@ -217,9 +226,12 @@ int main()
     {
         Performance temp(baseline.complete_weight(5), 2);
         temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
+        temp.round_reps();
         std::cout << temp << '\n';
     }
 
+    working_weight.increment_reps();
+    working_weight.round_reps();
     std::cout << '\n' << working_weight << '\n';
 
     return 0;
