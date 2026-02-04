@@ -1,6 +1,11 @@
 #include <iostream>
 #include <type_traits>
 
+#include <cassert>
+#include <vector>
+#include <map>
+#include <algorithm>
+
 template <bool has_w, bool has_reps, bool has_rir = true, std::enable_if_t<(!has_w ^ !has_reps ^ !has_rir), bool> = true>
 struct PartialPerformance {};
 
@@ -33,6 +38,7 @@ private:
     long double rir = 0;
 
 public:
+    Performance() noexcept {};
     Performance(long double init_weight, long double init_reps, long double init_rir = 0) noexcept : weight(init_weight), reps(init_reps), rir(init_rir) {}
 
     long double get_weight() const noexcept { return this->weight; }
@@ -133,8 +139,8 @@ public:
         long double deduced_reps;
         long double brzycki_threshold = estimate_rm() * 0.8054;
         long double epley_threshold = estimate_rm() * 0.75;
-        long double rev_brzycki_est = -(((target_weight / estimate_rm()) - 1.0278) / 0.0278) - target_rir;
-        long double rev_epley_est = (((30 * estimate_rm()) / target_weight) - 30) - target_rir;
+        long double rev_brzycki_est = -(((target_weight / estimate_rm()) - 1.0278) / 0.0278);
+        long double rev_epley_est = (((30 * estimate_rm()) / target_weight) - 30);
 
         if ((target_weight == this->weight) && (target_rir == this->rir))
         {
@@ -156,7 +162,7 @@ public:
             deduced_reps = ((target_weight / brzycki_threshold) - 1.226244224) / -0.02953801791;
         }
         
-        return Performance(target_weight, deduced_reps, target_rir);
+        return Performance(target_weight, deduced_reps - target_rir, target_rir);
     }
 
     Performance complete(long double target_weight, long double target_reps, std::nullptr_t target_rir = nullptr) const noexcept
@@ -168,4 +174,60 @@ public:
 std::ostream& operator<<(std::ostream& os, Performance p) 
 { 
     return os << p.get_weight() << "lb × " << p.get_reps() << " with " << p.get_rir() << " RIR";
+}
+
+// -- new file --
+
+std::vector<long double> generate_bw_options(long double body_weight, long double scaling_factor, std::vector<long double> weights)
+{
+    body_weight *= scaling_factor;
+
+    for (auto w : weights)
+    {
+        w += body_weight;
+    }
+    weights.emplace_back(body_weight);
+
+    return weights;
+}
+
+std::vector<Performance> init_reps(Performance baseline, const std::vector<long double>& weights, long double rir = 0)
+{
+    std::vector<Performance> res;
+
+    for (auto w : weights)
+    {
+        Performance temp(baseline.complete(w, nullptr, rir));
+        
+        if (temp.get_reps() > 0)
+        {
+            res.emplace_back(temp);
+        }
+    }
+
+    return res;
+}
+
+constexpr unsigned rir_heuristic(unsigned sets) { return (sets > 3)?2:(sets - 1); }
+
+Performance find_working_weight(Performance baseline, long double low, long double high, long double rir, const std::vector<Performance>& weights)
+{
+    Performance res{};
+    long double best_distance = 1;
+    
+    auto comp = [](Performance a, Performance b){ return a.get_weight() < b.get_weight(); };
+    for (auto iter = std::lower_bound(weights.begin(), weights.end(), baseline.complete(nullptr, high, rir), comp); 
+        (iter->get_reps() > low) && (iter != weights.end()); 
+        ++iter)
+    {
+        std::cout << *iter << '\n';
+
+        if (long double diff = (iter->get_reps() - int(iter->get_reps())); diff < best_distance)
+        {
+            res = *iter;
+            best_distance = diff;
+        }
+    }
+
+    return res;
 }
