@@ -187,11 +187,11 @@ int main()
 
     long double my_bodyweight = 148.4;
     long double dads_bodyweight = 206;
-    Performance baseline(15, 17);    
-    unsigned rir = rir_heuristic(4);
+    Performance baseline(20, 9);    
+    unsigned sets = 2, rir = rir_heuristic(sets);
     auto weights(init_reps(baseline, kristens_gym));
 
-    Performance working_weight(find_working_weight(baseline, 10 + rir, 15 + rir, weights));
+    Performance working_weight(find_working_weight(baseline, 5 + rir, 10 + rir, weights));
 
     {
         Performance temp(0.4 * baseline.estimate_rm(), 5);
@@ -229,21 +229,15 @@ int main()
         temp.round_reps();
         std::cout << temp << '\n';
     }
+    std::cout << '\n';
 
     working_weight.increment_reps();
     working_weight.round_reps();
-    std::cout << '\n' << working_weight << '\n';
+
+    for (unsigned i = 0; i < sets; ++i) 
+    {
+        std::cout << working_weight << '\n';
+    }
 
     return 0;
 }
-
-/*
-Estimated 1RM based on last performance: 75.90lb
-
-Warmup 1    : 30.199lb for 5
-Warmup 2    : 37.899lb for 5
-Warmup 3    : 45.462lb for 3
-Warmup 4    : 56.891lb for 2
-
-Working set : 61.152lb for 7
-*/
