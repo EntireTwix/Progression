@@ -35,6 +35,7 @@ public:
 
     long double increment_reps() noexcept { return ++this->reps; }
     long double round_reps() noexcept { return this->reps = std::roundl(this->reps); }
+    long double reduce_reps(long double reduction) noexcept { return this->reps -= reduction; }
 
     long double estimate_rm() const noexcept
     {
@@ -187,11 +188,11 @@ int main()
 
     long double my_bodyweight = 148.4;
     long double dads_bodyweight = 206;
-    Performance baseline(20, 9);    
-    unsigned sets = 2, rir = rir_heuristic(sets);
+    Performance baseline(15, 11);    
+    unsigned sets = 4, rir = rir_heuristic(sets);
     auto weights(init_reps(baseline, kristens_gym));
 
-    Performance working_weight(find_working_weight(baseline, 5 + rir, 10 + rir, weights));
+    Performance working_weight(find_working_weight(baseline, 5 + rir + 1, 10 + rir + 1, weights));
 
     {
         Performance temp(0.4 * baseline.estimate_rm(), 5);
@@ -233,6 +234,7 @@ int main()
 
     working_weight.increment_reps();
     working_weight.round_reps();
+    working_weight.reduce_reps(rir);
 
     for (unsigned i = 0; i < sets; ++i) 
     {
