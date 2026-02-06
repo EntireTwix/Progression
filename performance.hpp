@@ -126,7 +126,7 @@ std::ostream& operator<<(std::ostream& os, Performance p)
 
 // -- new file --
 
-std::vector<long double> generate_bw_options(long double body_weight, long double scaling_factor, std::vector<long double> weights)
+std::vector<long double> gen_bw_options(long double body_weight, long double scaling_factor, std::vector<long double> weights)
 {
     body_weight *= scaling_factor;
 
@@ -165,6 +165,7 @@ Performance find_working_weight(Performance baseline, long double low, long doub
     
     const auto comp = [](Performance a, Performance b){ return a.get_weight() < b.get_weight(); };
     auto iter = std::lower_bound(weights.begin(), weights.end(), Performance(nullptr, high, baseline), comp);
+    if (iter == weights.end()) { --iter; }
     do
     {
         long double diff = (iter->get_reps() - int(iter->get_reps()));
@@ -192,14 +193,14 @@ int main()
     std::vector<long double> moms_gym_dumbbells{5,10,15,20,25,30,35,40,45,50,55,60};
     std::vector<long double> moms_gym_barbell{45,55,65,75,85,95,105,115,125,135,145,155,165,175,185,195,205,215,225};
 
-    long double my_bodyweight = 148.4;
-    long double dads_bodyweight = 205.21;
+    long double my_bw = 148.4;
+    long double dads_bw = 205.21;
     
-    Performance baseline(164.95,6);    
+    Performance baseline(95, 14);    
     unsigned sets = 1, rir = rir_heuristic(sets);
-    auto weights(init_reps(baseline, generate_bw_options(dads_bodyweight, 0.95, dads_bands)));
+    auto weights(init_reps(baseline, sac_gym));
     if (!std::is_sorted(weights.begin(), weights.end())) { std::sort(weights.begin(), weights.end()); }
-    Performance working_weight(find_working_weight(baseline, 12 + rir - 1, 16 + rir - 1, weights));
+    Performance working_weight(find_working_weight(baseline, 1 + rir - 1, 1 + rir - 1, weights));
 
     std::vector<Performance> warm_ups;
     warm_ups.reserve(5);
@@ -218,9 +219,9 @@ int main()
         {            
             warm_ups.emplace_back(loc->get_weight(), (reps / temp.get_reps()) * loc->get_reps());
             std::cout << "\n[Looking for " << temp.get_weight() 
-            << "lb]\n[Estimated Rep Max for " << temp.get_weight() << "lb is " << temp.get_reps()
-            << "]\n[Closest Weight Found: " << loc->get_weight() << "lb for " << loc->get_reps() << "]\n"
-            << "[" << reps << " rep at " << temp.get_weight() << "lb -> " << (reps / temp.get_reps()) * loc->get_reps() << " rep at " << loc->get_weight() << "lb]\n";
+            << "lb x " << temp.get_reps()
+            << "]\n[Closest Weight Found: " << loc->get_weight() << "lb x " << loc->get_reps() << "]\n"
+            << "(" << temp.get_weight() << "lb x " << reps << ") -> (" << loc->get_weight() << "lb x " << (reps / temp.get_reps()) * loc->get_reps() << ")\n";
         }
     };
     
