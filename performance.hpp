@@ -130,7 +130,7 @@ std::vector<long double> generate_bw_options(long double body_weight, long doubl
 {
     body_weight *= scaling_factor;
 
-    for (auto w : weights)
+    for (auto& w : weights)
     {
         w += body_weight;
     }
@@ -187,17 +187,19 @@ int main()
     std::vector<long double> dads_barbell{11.1,21.1,31.1,41.1,51.1,61.1,71.1};
     std::vector<long double> dads_bands{-2.084745763,-5.211864407,-9.381355932,-12.50847458,-18.24152542,-11.46610169,-14.59322034,-21.88983051,-14.59322034,-17.72033898,-27.62288136,-7.296610169,-20.32627119,-23.45338983,-30.75};
     std::vector<long double> dads_backpack{6,11,16,21,26,31,36,41,46,51,56,61,66,71,76,81,86,91,96,101,106,111,116};
-    std::vector<long double> kristens_gym_dumbbells{8,10,12,15,20,25,30,35,40,45,50,55,60};
+    std::vector<long double> sac_dumbbells{8,10,12,15,20,25,30,35,40,45,50,55,60};
+    std::vector<long double> sac_gym{15,25,35,45,55,65,75,85,95,105,115,125,135,145,165};
     std::vector<long double> moms_gym_dumbbells{5,10,15,20,25,30,35,40,45,50,55,60};
     std::vector<long double> moms_gym_barbell{45,55,65,75,85,95,105,115,125,135,145,155,165,175,185,195,205,215,225};
 
     long double my_bodyweight = 148.4;
-    long double dads_bodyweight = 206;
+    long double dads_bodyweight = 205.21;
     
-    Performance baseline(12.3,1);    
+    Performance baseline(164.95,6);    
     unsigned sets = 1, rir = rir_heuristic(sets);
-    auto weights(init_reps(baseline, kristens_gym_dumbbells));
-    Performance working_weight(find_working_weight(baseline, 4 + rir - 1, 12 + rir - 1, weights));
+    auto weights(init_reps(baseline, generate_bw_options(dads_bodyweight, 0.95, dads_bands)));
+    if (!std::is_sorted(weights.begin(), weights.end())) { std::sort(weights.begin(), weights.end()); }
+    Performance working_weight(find_working_weight(baseline, 12 + rir - 1, 16 + rir - 1, weights));
 
     std::vector<Performance> warm_ups;
     warm_ups.reserve(5);
@@ -241,7 +243,10 @@ int main()
     {
         // w.double_reps();
         w.round_reps();
-        std::cout << w << '\n';
+        if (w.get_reps() > 0)
+        {
+            std::cout << w << '\n';
+        }
     }
     std::cout << '\n';
     
