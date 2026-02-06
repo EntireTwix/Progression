@@ -35,6 +35,7 @@ public:
 
     long double increment_reps() noexcept { return ++this->reps; }
     long double round_reps() noexcept { return this->reps = std::roundl(this->reps); }
+    long double floor_reps() noexcept { return this->reps = std::floor(this->reps); }
     long double reduce_reps(long double reduction) noexcept { return this->reps -= reduction; }
 
     long double estimate_rm() const noexcept
@@ -119,7 +120,7 @@ public:
 
 std::ostream& operator<<(std::ostream& os, Performance p) 
 { 
-    return os << p.get_weight() << "lb × " << p.get_reps();
+    return os << p.get_weight() << "lb x " << p.get_reps();
 }
 
 // -- new file --
@@ -165,7 +166,8 @@ Performance find_working_weight(Performance baseline, long double low, long doub
     auto iter = std::lower_bound(weights.begin(), weights.end(), Performance(nullptr, high, baseline), comp);
     do
     {
-        if (long double diff = (iter->get_reps() - int(iter->get_reps())); diff < best_distance)
+        long double diff = (iter->get_reps() - int(iter->get_reps()));
+        if (diff < best_distance)
         {
             res = *iter;
             best_distance = diff;
@@ -190,35 +192,31 @@ int main()
 
     long double my_bodyweight = 148.4;
     long double dads_bodyweight = 206;
-    Performance baseline(25,12);    
-    unsigned sets = 3, rir = rir_heuristic(sets);
-    auto weights(init_reps(baseline, moms_gym_dumbbells));
-
-    Performance working_weight(find_working_weight(baseline, 10 + rir - 1, 40 + rir - 1, weights));
+    
+    Performance baseline(55,12);    
+    unsigned sets = 2, rir = rir_heuristic(sets);
+    auto weights(init_reps(baseline, kristens_gym_dumbbells));
+    Performance working_weight(find_working_weight(baseline, 8 + rir - 1, 12 + rir - 1, weights));
     
     std::cout << "e1RM: " << baseline.estimate_rm() << "lb\n\n";
-
     {
         Performance temp(0.4 * baseline.estimate_rm(), 5);
         temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
         temp.round_reps();
         std::cout << temp << '\n';
     }
-
     {
         Performance temp(0.5 * baseline.estimate_rm(), 5);
         temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
         temp.round_reps();
         std::cout << temp << '\n';
     }
-
     {
         Performance temp(0.6 * baseline.estimate_rm(), 3);
         temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
         temp.round_reps();
         std::cout << temp << '\n';
     }
-
     if (working_weight.get_reps() <= 10)
     {
         Performance temp(baseline.complete_weight(10), 2);
@@ -226,7 +224,6 @@ int main()
         temp.round_reps();
         std::cout << temp << '\n';
     }
-    
     if (working_weight.get_reps() <= 5)
     {
         Performance temp(baseline.complete_weight(5), 2);
@@ -237,7 +234,7 @@ int main()
     std::cout << '\n';
 
     working_weight.increment_reps();
-    working_weight.round_reps();
+    working_weight.floor_reps();
     working_weight.reduce_reps(rir);
     
     for (unsigned i = 0; i < sets; ++i) 
