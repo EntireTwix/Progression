@@ -37,6 +37,7 @@ public:
     long double round_reps() noexcept { return this->reps = std::roundl(this->reps); }
     long double floor_reps() noexcept { return this->reps = std::floor(this->reps); }
     long double reduce_reps(long double reduction) noexcept { return this->reps -= reduction; }
+    long double double_reps() noexcept { return this->reps *= 2; }
 
     long double estimate_rm() const noexcept
     {
@@ -193,49 +194,61 @@ int main()
     long double my_bodyweight = 148.4;
     long double dads_bodyweight = 206;
     
-    Performance baseline(55,12);    
-    unsigned sets = 2, rir = rir_heuristic(sets);
+    Performance baseline(12.3,1);    
+    unsigned sets = 1, rir = rir_heuristic(sets);
     auto weights(init_reps(baseline, kristens_gym_dumbbells));
-    Performance working_weight(find_working_weight(baseline, 8 + rir - 1, 12 + rir - 1, weights));
+    Performance working_weight(find_working_weight(baseline, 4 + rir - 1, 12 + rir - 1, weights));
+
+    std::vector<Performance> warm_ups;
+    warm_ups.reserve(5);
+    auto gen_warm_up = [&baseline, &weights](long double weight, long double reps, std::vector<Performance>& warm_ups){
+        Performance temp(weight, nullptr, baseline);
+        auto loc = std::lower_bound(weights.begin(), weights.end(), temp);
+        
+        if ((warm_ups.back().get_weight() == loc->get_weight()) && (unsigned(std::roundl(warm_ups.back().get_reps())) >= unsigned(std::roundl((reps / temp.get_reps()) * loc->get_reps()))))
+        {
+            std::cout << "\n[Erasing " << loc->get_weight() << "lb from Available Weights]\n";
+            weights.erase(loc);
+            loc = std::lower_bound(weights.begin(), weights.end(), temp);
+        }
+
+        if ((loc != weights.end()) && (!warm_ups.size() || (loc->get_weight() >= warm_ups.back().get_weight())))
+        {            
+            warm_ups.emplace_back(loc->get_weight(), (reps / temp.get_reps()) * loc->get_reps());
+            std::cout << "\n[Looking for " << temp.get_weight() 
+            << "lb]\n[Estimated Rep Max for " << temp.get_weight() << "lb is " << temp.get_reps()
+            << "]\n[Closest Weight Found: " << loc->get_weight() << "lb for " << loc->get_reps() << "]\n"
+            << "[" << reps << " rep at " << temp.get_weight() << "lb -> " << (reps / temp.get_reps()) * loc->get_reps() << " rep at " << loc->get_weight() << "lb]\n";
+        }
+    };
     
-    std::cout << "e1RM: " << baseline.estimate_rm() << "lb\n\n";
-    {
-        Performance temp(0.4 * baseline.estimate_rm(), 5);
-        temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
-        temp.round_reps();
-        std::cout << temp << '\n';
-    }
-    {
-        Performance temp(0.5 * baseline.estimate_rm(), 5);
-        temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
-        temp.round_reps();
-        std::cout << temp << '\n';
-    }
-    {
-        Performance temp(0.6 * baseline.estimate_rm(), 3);
-        temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
-        temp.round_reps();
-        std::cout << temp << '\n';
-    }
+    gen_warm_up(0.4 * baseline.estimate_rm(), 5, warm_ups);
+    gen_warm_up(0.5 * baseline.estimate_rm(), 5, warm_ups);
+    gen_warm_up(0.6 * baseline.estimate_rm(), 3, warm_ups);
+    
     if (working_weight.get_reps() <= 10)
     {
-        Performance temp(baseline.complete_weight(10), 2);
-        temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
-        temp.round_reps();
-        std::cout << temp << '\n';
+        gen_warm_up(baseline.complete_weight(10), 2, warm_ups);
     }
+    
     if (working_weight.get_reps() <= 5)
     {
-        Performance temp(baseline.complete_weight(5), 2);
-        temp.shift_weight(baseline, std::lower_bound(weights.begin(), weights.end(), temp)->get_weight());
-        temp.round_reps();
-        std::cout << temp << '\n';
+        gen_warm_up(baseline.complete_weight(5), 1, warm_ups);
+    }
+    
+    std::cout << "\ne1RM: " << baseline.estimate_rm() << "lb\n\n";
+    for (auto w : warm_ups)
+    {
+        // w.double_reps();
+        w.round_reps();
+        std::cout << w << '\n';
     }
     std::cout << '\n';
-
+    
     working_weight.increment_reps();
-    working_weight.floor_reps();
     working_weight.reduce_reps(rir);
+    // working_weight.double_reps();
+    working_weight.floor_reps();
     
     for (unsigned i = 0; i < sets; ++i) 
     {
