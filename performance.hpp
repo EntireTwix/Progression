@@ -35,7 +35,7 @@ public:
 
     long double increment_reps() noexcept { return ++this->reps; }
     long double round_reps() noexcept { return this->reps = std::roundl(this->reps); }
-    long double floor_reps() noexcept { return this->reps = std::floor(this->reps); }
+    long double floor_reps() noexcept { return this->reps = std::floor(this->reps + 0.001); }
     long double reduce_reps(long double reduction) noexcept { return this->reps -= reduction; }
     long double double_reps() noexcept { return this->reps *= 2; }
 
@@ -196,11 +196,11 @@ int main()
     long double my_bw = 148.4;
     long double dads_bw = 205.21;
     
-    Performance baseline(95, 14);    
-    unsigned sets = 1, rir = rir_heuristic(sets);
-    auto weights(init_reps(baseline, sac_gym));
+    Performance baseline(153.9075, 16);    
+    unsigned sets = 2, rir = rir_heuristic(sets);
+    auto weights(init_reps(baseline, {dads_bw * 0.75}));
     if (!std::is_sorted(weights.begin(), weights.end())) { std::sort(weights.begin(), weights.end()); }
-    Performance working_weight(find_working_weight(baseline, 1 + rir - 1, 1 + rir - 1, weights));
+    Performance working_weight(find_working_weight(baseline, 15 + rir - 1, 20 + rir - 1, weights));
 
     std::vector<Performance> warm_ups;
     warm_ups.reserve(5);
