@@ -168,7 +168,7 @@ Performance find_working_weight(Performance baseline, long double low, long doub
     if (iter == weights.end()) { --iter; }
     do
     {
-        long double diff = (iter->get_reps() - int(iter->get_reps()));
+        long double diff = (iter->get_reps() - int(iter->get_reps() + 0.001));
         if (diff < best_distance)
         {
             res = *iter;
@@ -189,18 +189,23 @@ int main()
     std::vector<long double> dads_bands{-2.084745763,-5.211864407,-9.381355932,-12.50847458,-18.24152542,-11.46610169,-14.59322034,-21.88983051,-14.59322034,-17.72033898,-27.62288136,-7.296610169,-20.32627119,-23.45338983,-30.75};
     std::vector<long double> dads_backpack{6,11,16,21,26,31,36,41,46,51,56,61,66,71,76,81,86,91,96,101,106,111,116};
     std::vector<long double> sac_dumbbells{8,10,12,15,20,25,30,35,40,45,50,55,60};
-    std::vector<long double> sac_gym{15,25,35,45,55,65,75,85,95,105,115,125,135,145,165};
+    std::vector<long double> sac_machines{15,20,25,30,35,45,55,65,75,85,95,105,115,125,140,155,170,185,200};
+    std::vector<long double> kristen_dumbbells{8,10,12,15};
     std::vector<long double> moms_gym_dumbbells{5,10,15,20,25,30,35,40,45,50,55,60};
     std::vector<long double> moms_gym_barbell{45,55,65,75,85,95,105,115,125,135,145,155,165,175,185,195,205,215,225};
 
     long double my_bw = 148.4;
     long double dads_bw = 205.21;
     
-    Performance baseline(153.9075, 16);    
+    Performance baseline(209.647, 5);
     unsigned sets = 2, rir = rir_heuristic(sets);
-    auto weights(init_reps(baseline, {dads_bw * 0.75}));
+    auto weights(init_reps(baseline, sac_dumbbells));
+    for (auto w : weights)
+    {
+        std::cout << w << '\n';
+    }
     if (!std::is_sorted(weights.begin(), weights.end())) { std::sort(weights.begin(), weights.end()); }
-    Performance working_weight(find_working_weight(baseline, 15 + rir - 1, 20 + rir - 1, weights));
+    Performance working_weight(find_working_weight(baseline, 6 + rir - 1, 18 + rir - 1, weights));
 
     std::vector<Performance> warm_ups;
     warm_ups.reserve(5);
