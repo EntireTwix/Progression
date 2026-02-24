@@ -58,8 +58,8 @@ public:
     long double complete_weight(long double target_reps) const noexcept
     {
         long double deduced_weight;
-        long double brzycki_est = estimate_rm() * (1.0278 - (0.0278 * target_reps));
-        long double epley_est = (30 * estimate_rm()) / (30 + target_reps);
+        const long double brzycki_est = this->estimate_rm() * (1.0278 - (0.0278 * target_reps));
+        const long double epley_est = (30 * this->estimate_rm()) / (30 + target_reps);
 
         if (target_reps == this->reps)
         {
@@ -75,7 +75,7 @@ public:
         }
         else
         {
-            deduced_weight = ((estimate_rm() * (1.0278 - (0.0278 * target_reps))) * 0.5) + (((30 * estimate_rm()) / (30 + target_reps)) * 0.5);
+            deduced_weight = ((this->estimate_rm() * (1.0278 - (0.0278 * target_reps))) * 0.5) + (((30 * this->estimate_rm()) / (30 + target_reps)) * 0.5);
         }
 
         return deduced_weight;
@@ -84,10 +84,10 @@ public:
     long double complete_reps(long double target_weight) const noexcept
     {
         long double deduced_reps;
-        long double brzycki_threshold = estimate_rm() * 0.8054;
-        long double epley_threshold = estimate_rm() * 0.75;
-        long double rev_brzycki_est = -(((target_weight / estimate_rm()) - 1.0278) / 0.0278);
-        long double rev_epley_est = (((30 * estimate_rm()) / target_weight) - 30);
+        const long double brzycki_threshold = this->estimate_rm() * 0.8054;
+        const long double epley_threshold = this->estimate_rm() * 0.75;
+        const long double rev_brzycki_est = -(((target_weight / this->estimate_rm()) - 1.0278) / 0.0278);
+        const long double rev_epley_est = (((30 * this->estimate_rm()) / target_weight) - 30);
 
         if (target_weight == this->weight)
         {
@@ -104,7 +104,7 @@ public:
             deduced_reps = rev_epley_est;
         }
         else
-        {       
+        {
             // Not an exact solution
             deduced_reps = ((target_weight / brzycki_threshold) - 1.226244224) / -0.02953801791;
         }
@@ -188,18 +188,18 @@ int main()
     std::vector<long double> moms_gym_dumbbells{5,10,15,20,25,30,35,40,45,50,55,60};
     std::vector<long double> moms_gym_barbell{45,55,65,75,85,95,105,115,125,135,145,155,165,175,185,195,205,215,225};
 
-    long double my_bw = 150;
-    long double dads_bw = 205.21;
+    long double my_bw = 148.7;
+    long double dads_bw = 206;
     
-    const Performance baseline(142.215, 7);
-    unsigned sets = 4, rir = rir_heuristic(sets);
-    auto weights(init_reps(baseline, gen_bw_options(my_bw, 0.95, my_weights_uni)));
+    const Performance baseline(my_bw / 2, 5);
+    unsigned sets = 1, rir = rir_heuristic(sets) + 1;
+    auto weights(init_reps(baseline, my_weights));
     if (!std::is_sorted(weights.begin(), weights.end())) { std::sort(weights.begin(), weights.end()); }
     for (auto w : weights)
     {
-        // std::cout << w << '\n';
+        std::cout << w << '\n';
     }
-    Performance working_weight(find_working_weight(baseline, 10 + rir - 1, 10 + rir - 1, weights));
+    Performance working_weight(find_working_weight(baseline, 6 + rir - 1, 18 + rir - 1, weights));
 
     std::vector<Performance> warm_ups;
     warm_ups.reserve(5);
@@ -226,9 +226,9 @@ int main()
         }
     };
     
-    gen_warm_up(0.4 * baseline.estimate_rm(), 5, warm_ups);
-    gen_warm_up(0.5 * baseline.estimate_rm(), 5, warm_ups);
-    gen_warm_up(0.6 * baseline.estimate_rm(), 3, warm_ups);
+    gen_warm_up(baseline.complete_weight(45), 5, warm_ups);
+    gen_warm_up(baseline.complete_weight(30), 5, warm_ups);
+    gen_warm_up(baseline.complete_weight(20), 3, warm_ups);
     
     if (working_weight.get_reps() <= 10)
     {
