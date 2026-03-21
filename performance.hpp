@@ -191,15 +191,15 @@ int main()
     long double my_bw = 148.7;
     long double dads_bw = 206;
     
-    const Performance baseline(my_bw / 2, 5);
-    unsigned sets = 1, rir = rir_heuristic(sets) + 1;
-    auto weights(init_reps(baseline, my_weights));
+    const Performance baseline(10, 6);
+    unsigned sets = 1, rir = rir_heuristic(sets);
+    auto weights(init_reps(baseline, kristen_dumbbells));
     if (!std::is_sorted(weights.begin(), weights.end())) { std::sort(weights.begin(), weights.end()); }
     for (auto w : weights)
     {
-        std::cout << w << '\n';
+        // std::cout << w << '\n';
     }
-    Performance working_weight(find_working_weight(baseline, 6 + rir - 1, 18 + rir - 1, weights));
+    Performance working_weight(find_working_weight(baseline, 4 + rir - 1, 12 + rir - 1, weights));
 
     std::vector<Performance> warm_ups;
     warm_ups.reserve(5);
@@ -208,7 +208,7 @@ int main()
         auto loc = std::lower_bound(weights.begin(), weights.end(), temp);
         
         while ((warm_ups.back().get_weight() == loc->get_weight()) 
-        && (std::roundl(warm_ups.back().get_reps()) >= std::roundl((reps / temp.get_reps()) * loc->get_reps())))
+        && (std::roundl(warm_ups.back().get_reps()) >= std::roundl((reps / temp.get_reps()) * loc->get_reps())) && weights.size())
         // || (std::roundl(loc->get_reps()) == std::roundl(baseline.complete_reps(warm_ups.back().get_weight()))))
         {
             // std::cout << "[Erasing " << loc->get_weight() << "lb from Available Weights]\n";
