@@ -186,20 +186,7 @@ int main()
     std::vector<long double> kristen_dumbbells{5,8,10,12,15,20,25};
     std::vector<long double> moms_gym_dumbbells{5,10,15,20,25,30,35,40,45,50,55,60};
     std::vector<long double> moms_gym_barbell{45,55,65,75,85,95,105,115,125,135,145,155,165,175,185,195,205,215,225};
-    std::vector<long double> ez_bar{11.1,11.6,12.1,12.6,13.1,13.6,14.1,14.6,15.1,15.6,
-16.1,
-16.6,
-17.1,
-17.6,
-18.1,
-18.6,
-19.1,
-19.6,
-20.1,
-20.6,
-21.1,
-21.6,
-22.1,
+    std::vector<long double> ez_bar{11.1,11.6,12.1,12.6,13.1,13.6,14.1,14.6,15.1,15.6,16.1,16.6,17.1,17.6,18.1,18.6,19.1,19.6,20.1,20.6,21.1,21.6,22.1,
 22.6,
 23.1,
 23.6,
@@ -343,54 +330,28 @@ int main()
 92.6,
 93.1,
 93.6,
-94.1,
-94.6,
-95.1,
-95.6,
-96.1,
-96.6,
-97.1,
-97.6,
-98.1,
-98.6,
-99.1,
-99.6,
-100.1,
-100.6,
-101.1,
-101.6,
-102.1,
-102.6,
-103.1,
-103.6,
-104.1,
-104.6,
-105.1,
-105.6,
-106.1,
-106.6,
-107.1,
-107.6,
-108.1,
-108.6,
-109.1,
-109.6,
-110.1,
-110.6,111.1};
+94.1,94.6,95.1,95.6,96.1,96.6,97.1,97.6,98.1,98.6,99.1,99.6,100.1,100.6,101.1,101.6,102.1,102.6,103.1,103.6,104.1,104.6,105.1,105.6,106.1,106.6,107.1,107.6,108.1,108.6,109.1,109.6,110.1,110.6,111.1};
+    
+    std::vector<long double> gym{};
+    for (int i = 45; i < 400; i+=5)
+    {
+        gym.push_back(i);
+    }
+    
     long double my_bw = 153.5;
     long double dads_bw = 196;
     
-    const Performance baseline(89.1, 1);
+    const Performance baseline(329.3, 1);
     unsigned sets = 3;
     unsigned rir = 0;
-    auto weights(init_reps(baseline, ez_bar));
+    auto weights(init_reps(baseline, gym));
     if (!std::is_sorted(weights.begin(), weights.end())) { std::sort(weights.begin(), weights.end()); }
     for (auto w : weights)
     {
          // std::cout << w << '\n';
     }
     
-    Performance working_weight(find_working_weight(baseline, 8 + rir - 1, 12 + rir - 1, weights));
+    Performance working_weight(find_working_weight(baseline, 0 + rir - 1, 1 + rir - 1, weights));
 
     std::vector<Performance> warm_ups;
     warm_ups.reserve(5);
