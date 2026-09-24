@@ -341,8 +341,8 @@ int main()
     long double my_bw = 153.5;
     long double dads_bw = 196;
     
-    const Performance baseline(329.3, 1);
-    unsigned sets = 3;
+    const Performance baseline(334.5, 1);
+    unsigned sets = 1;
     unsigned rir = 0;
     auto weights(init_reps(baseline, gym));
     if (!std::is_sorted(weights.begin(), weights.end())) { std::sort(weights.begin(), weights.end()); }
@@ -382,9 +382,14 @@ int main()
     gen_warm_up(baseline.complete_weight(30), 5, warm_ups);
     gen_warm_up(baseline.complete_weight(20), 3, warm_ups);
     
-    if (working_weight.get_reps() <= 10)
+    if (working_weight.get_reps() <= 8)
     {
         gen_warm_up(baseline.complete_weight(10), 2, warm_ups);
+    }
+    
+    if (working_weight.get_reps() <= 3)
+    {
+        gen_warm_up(baseline.complete_weight(5), 1, warm_ups);
     }
     
     std::cout << "\ne1RM: " << baseline.estimate_rm() << "lb\n\n";
