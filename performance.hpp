@@ -7,33 +7,16 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
-#define CHANGE_RETURN(x) auto y = x; update_erm(); return y
+#define CHANGE_RETURN(x) change_flag = true; auto y = x; return y
 
 class Performance
 {
 private:
     long double weight = 0;
     long double reps = 0;
+    bool change_flag = false;
     long double last_erm = 0;
 
-public:
-    Performance() noexcept {}
-    Performance(long double init_weight, long double init_reps) noexcept : weight(init_weight), reps(init_reps) { update_erm(); }
-    Performance(std::nullptr_t init_weight, long double init_reps, Performance baseline) noexcept : weight(baseline.complete_weight(init_reps)), reps(init_reps) { update_erm(); }
-    Performance(long double init_weight, std::nullptr_t init_reps, Performance baseline) noexcept : weight(init_weight), reps(baseline.complete_reps(init_weight)) { update_erm(); }
-
-    long double get_weight() const noexcept { return this->weight; }
-    long double get_reps() const noexcept { return this->reps; }
-
-    bool operator<(Performance p) const noexcept { return this->weight < p.weight; }
-
-    long double increment_reps() noexcept { CHANGE_RETURN(++this->reps); }
-    long double round_reps() noexcept { CHANGE_RETURN(this->reps = std::roundl(this->reps)); }
-    long double floor_reps() noexcept { CHANGE_RETURN(this->reps = std::floor(this->reps + 0.001)); }
-    long double reduce_reps(long double reduction) noexcept { CHANGE_RETURN(this->reps -= reduction); }
-    long double double_reps() noexcept { CHANGE_RETURN(this->reps *= 2); }
-
-    long double estimate_rm() const noexcept { return last_erm; }
     long double update_erm() noexcept
     {
         long double max_weight;
@@ -54,12 +37,40 @@ public:
         return last_erm = max_weight;        
     }
 
-    static long double percent_change(const Performance a, const Performance b) 
+public:
+    Performance() noexcept {}
+    Performance(long double init_weight, long double init_reps) noexcept : weight(init_weight), reps(init_reps) { this->update_erm(); }
+    Performance(std::nullptr_t init_weight, long double init_reps, Performance baseline) noexcept : weight(baseline.complete_weight(init_reps)), reps(init_reps), change_flag(true) { }
+    Performance(long double init_weight, std::nullptr_t init_reps, Performance baseline) noexcept : weight(init_weight), reps(baseline.complete_reps(init_weight)), change_flag(true) { }
+
+    long double get_weight() const noexcept { return this->weight; }
+    long double get_reps() const noexcept { return this->reps; }
+
+    bool operator<(Performance p) const noexcept { return this->weight < p.weight; }
+
+    long double increment_reps() noexcept { CHANGE_RETURN(++this->reps); }
+    long double round_reps() noexcept { CHANGE_RETURN(this->reps = std::roundl(this->reps)); }
+    long double floor_reps() noexcept { CHANGE_RETURN(this->reps = std::floor(this->reps + 0.001)); }
+    long double reduce_reps(long double reduction) noexcept { CHANGE_RETURN(this->reps -= reduction); }
+    long double double_reps() noexcept { CHANGE_RETURN(this->reps *= 2); }
+
+    long double estimate_rm() noexcept 
+    {
+        if (change_flag)
+        {
+            update_erm();
+            change_flag = false;
+        }
+        
+        return last_erm; 
+    }
+
+    static long double percent_change(Performance a, Performance b) 
     { 
         return (b.estimate_rm() - a.estimate_rm()) / a.estimate_rm(); 
     }
     
-    long double complete_weight(long double target_reps) const noexcept
+    long double complete_weight(long double target_reps) noexcept
     {
         long double deduced_weight;
         const long double brzycki_est = this->estimate_rm() * (1.0278 - (0.0278 * target_reps));
@@ -85,7 +96,7 @@ public:
         return deduced_weight;
     }
 
-    long double complete_reps(long double target_weight) const noexcept
+    long double complete_reps(long double target_weight) noexcept
     {
         long double deduced_reps;
         const long double brzycki_threshold = this->estimate_rm() * 0.8054;
@@ -354,14 +365,14 @@ int main()
     long double my_bw = 153.5;
     long double dads_bw = 196;
     
-    const Performance baseline(334.5, 1);
+    Performance baseline(334.5, 1);
     unsigned sets = 1;
     unsigned rir = 0;
     auto weights(init_reps(baseline, gym));
     if (!std::is_sorted(weights.begin(), weights.end())) { std::sort(weights.begin(), weights.end()); }
     for (auto w : weights)
     {
-         // std::cout << w << '\n';
+         std::cout << w << '\n';
     }
     
     Performance working_weight(find_working_weight(baseline, 0 + rir - 1, 1 + rir - 1, weights));
