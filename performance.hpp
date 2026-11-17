@@ -7,21 +7,20 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
-#define CHANGE_RETURN(x) change_flag = true; auto y = x; update_erm(); return y
+#define CHANGE_RETURN(x) auto y = x; update_erm(); return y
 
 class Performance
 {
 private:
     long double weight = 0;
     long double reps = 0;
-    bool change_flag = true;
     long double last_erm = 0;
 
 public:
     Performance() noexcept {}
-    Performance(long double init_weight, long double init_reps) noexcept : weight(init_weight), reps(init_reps) { change_flag = true; update_erm(); }
-    Performance(std::nullptr_t init_weight, long double init_reps, Performance baseline) noexcept : weight(baseline.complete_weight(init_reps)), reps(init_reps) { change_flag = true; update_erm(); }
-    Performance(long double init_weight, std::nullptr_t init_reps, Performance baseline) noexcept : weight(init_weight), reps(baseline.complete_reps(init_weight)) { change_flag = true; update_erm(); }
+    Performance(long double init_weight, long double init_reps) noexcept : weight(init_weight), reps(init_reps) { update_erm(); }
+    Performance(std::nullptr_t init_weight, long double init_reps, Performance baseline) noexcept : weight(baseline.complete_weight(init_reps)), reps(init_reps) { update_erm(); }
+    Performance(long double init_weight, std::nullptr_t init_reps, Performance baseline) noexcept : weight(init_weight), reps(baseline.complete_reps(init_weight)) { update_erm(); }
 
     long double get_weight() const noexcept { return this->weight; }
     long double get_reps() const noexcept { return this->reps; }
@@ -32,33 +31,27 @@ public:
     long double round_reps() noexcept { CHANGE_RETURN(this->reps = std::roundl(this->reps)); }
     long double floor_reps() noexcept { CHANGE_RETURN(this->reps = std::floor(this->reps + 0.001)); }
     long double reduce_reps(long double reduction) noexcept { CHANGE_RETURN(this->reps -= reduction); }
-    long double double_reps() noexcept { return CHANGE_RETURN(this->reps *= 2); }
+    long double double_reps() noexcept { CHANGE_RETURN(this->reps *= 2); }
 
     long double estimate_rm() const noexcept { return last_erm; }
     long double update_erm() noexcept
     {
-        if (change_flag)
+        long double max_weight;
+
+        if (this->reps <= 8)
         {
-            long double max_weight;
-
-            if (this->reps <= 8)
-            {
-                max_weight = this->weight / (1.0278 - (0.0278 * this->reps));
-            }
-            else if (this->reps >= 10)
-            {
-                max_weight = this->weight * (1 + ((this->reps) / 30.0));
-            }
-            else
-            {
-                max_weight = ((this->weight * (10 - this->reps)) / (2 * (1.0278 - (0.0278 * this->reps))) + this->weight + ((this->weight * (-75 + (8 * this->reps))) / 15) - ((this->weight * this->reps * (10 - this->reps)) / 60));
-            }
-
-            last_erm = max_weight;
-            change_flag = false;
+            max_weight = this->weight / (1.0278 - (0.0278 * this->reps));
+        }
+        else if (this->reps >= 10)
+        {
+            max_weight = this->weight * (1 + ((this->reps) / 30.0));
+        }
+        else
+        {
+            max_weight = ((this->weight * (10 - this->reps)) / (2 * (1.0278 - (0.0278 * this->reps))) + this->weight + ((this->weight * (-75 + (8 * this->reps))) / 15) - ((this->weight * this->reps * (10 - this->reps)) / 60));
         }
 
-        return last_erm;
+        return last_erm = max_weight;        
     }
 
     static long double percent_change(const Performance a, const Performance b) 
