@@ -39,9 +39,9 @@ private:
 
 public:
     Performance() noexcept {}
-    Performance(long double init_weight, long double init_reps) noexcept : weight(init_weight), reps(init_reps) { this->update_erm(); }
-    Performance(std::nullptr_t init_weight, long double init_reps, Performance baseline) noexcept : weight(baseline.complete_weight(init_reps)), reps(init_reps), change_flag(true) { }
-    Performance(long double init_weight, std::nullptr_t init_reps, Performance baseline) noexcept : weight(init_weight), reps(baseline.complete_reps(init_weight)), change_flag(true) { }
+    Performance(long double init_weight, long double init_reps) noexcept : weight(init_weight), reps(init_reps), change_flag(true) { }
+    Performance(std::nullptr_t init_weight, long double init_reps, Performance& baseline) noexcept : weight(baseline.complete_weight(init_reps)), reps(init_reps), change_flag(true) { }
+    Performance(long double init_weight, std::nullptr_t init_reps, Performance& baseline) noexcept : weight(init_weight), reps(baseline.complete_reps(init_weight)), change_flag(true) { }
 
     long double get_weight() const noexcept { return this->weight; }
     long double get_reps() const noexcept { return this->reps; }
@@ -158,7 +158,7 @@ std::vector<long double> gen_bw_options(long double body_weight, long double sca
     return weights;
 }
 
-std::vector<Performance> init_reps(const Performance baseline, const std::vector<long double>& weights)
+std::vector<Performance> init_reps(Performance& baseline, const std::vector<long double>& weights)
 {
     std::vector<Performance> res;
 
@@ -177,7 +177,7 @@ std::vector<Performance> init_reps(const Performance baseline, const std::vector
 
 constexpr unsigned rir_heuristic(unsigned sets) { return (sets >= 3)?2:(sets - 1); }
 
-Performance find_working_weight(const Performance baseline, long double low, long double high, const std::vector<Performance>& weights)
+Performance find_working_weight(Performance& baseline, long double low, long double high, const std::vector<Performance>& weights)
 {
     Performance res{};
     long double best_distance = 1;
