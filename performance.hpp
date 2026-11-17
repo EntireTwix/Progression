@@ -18,10 +18,10 @@ private:
     long double last_erm = 0;
 
 public:
-    Performance() noexcept {};
-    Performance(long double init_weight, long double init_reps) noexcept : weight(init_weight), reps(init_reps) { update_erm(); }
-    Performance(std::nullptr_t init_weight, long double init_reps, Performance baseline) noexcept : weight(baseline.complete_weight(init_reps)), reps(init_reps) {}
-    Performance(long double init_weight, std::nullptr_t init_reps, Performance baseline) noexcept : weight(init_weight), reps(baseline.complete_reps(init_weight)) {}
+    Performance() noexcept {}
+    Performance(long double init_weight, long double init_reps) noexcept : weight(init_weight), reps(init_reps) { change_flag = true; update_erm(); }
+    Performance(std::nullptr_t init_weight, long double init_reps, Performance baseline) noexcept : weight(baseline.complete_weight(init_reps)), reps(init_reps) { change_flag = true; update_erm(); }
+    Performance(long double init_weight, std::nullptr_t init_reps, Performance baseline) noexcept : weight(init_weight), reps(baseline.complete_reps(init_weight)) { change_flag = true; update_erm(); }
 
     long double get_weight() const noexcept { return this->weight; }
     long double get_reps() const noexcept { return this->reps; }
@@ -116,8 +116,18 @@ public:
         }
         else
         {
-            // Not an exact solution
-            deduced_reps = ((target_weight / brzycki_threshold) - 1.226244224) / -0.02953801791;
+            const long double rm = this->estimate_rm();
+            const long double q = target_weight / rm;
+            constexpr long double a = 1.0278L;
+            constexpr long double b = 0.0278L;
+        
+            const long double quadratic_b = 2.0L * q - a + 30.0L * b;
+            const long double quadratic_c = 30.0L * (2.0L * q - a) - 30.0L;
+        
+            deduced_reps =
+                (-quadratic_b + std::sqrt(
+                    quadratic_b * quadratic_b - 4.0L * b * quadratic_c
+                )) / (2.0L * b);
         }
         
         return deduced_reps;
